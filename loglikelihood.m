@@ -32,17 +32,30 @@ switch mode
         if ~isempty(p)
             %compute each prior
             %stable log of (p_i^q_i)/q_i!
-            prior = @(p_i, q_i) q_i*log(p_i) - logfactorial(q_i);
-            LL = LL + sum(arrayfun(prior,p(p(:) ~= 0),q(p(:) ~= 0)));
+            LL = LL + sum(arrayfun(@prior,p(p(:) ~= 0),q(p(:) ~= 0)));
         end
         
         if ~isempty(y)
             %compute each posterior
             %stable log of (n_i nchoosek y_i) * alpha^y_i * (1-alpha)^(n_i-y_i)
-            posterior = @(y_i, n_i) logfactorial(n_i) - logfactorial(y_i) - logfactorial(n_i-y_i) ...
-                + y_i * log(alpha) + (n_i-y_i) * log(1-alpha);
-            LL = LL + sum(arrayfun(posterior,y(:),n(:)));
+            LL = LL + sum(arrayfun(@(y_i,n_i) posterior(y_i,n_i,alpha),y(:),n(:)));
         end
 end
 end
 
+%% compute the prior probability of p_i,q_i
+function [ prob ] = prior( p_i, q_i )
+if p_i == 0 && q_i == 0
+    prob = 0;
+else
+    prob = q_i*log(p_i) - logfactorial(q_i);
+end
+end
+
+%% compute the posterior probability of y_i,n_i
+function [ prob ] = posterior( y_i, n_i, alpha )
+prob = logfactorial(n_i) - logfactorial(y_i) - logfactorial(n_i - y_i);
+if ~(y_i == 0 && alpha == 0) && ~(y_i == n_i && alpha == 1)
+    prob = prob + y_i * log(alpha) + (n_i - y_i) * log(1-alpha);    
+end
+end

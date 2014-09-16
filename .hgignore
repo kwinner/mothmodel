@@ -1,0 +1,6 @@
+syntax: glob
+
+lightspeed
+*.mexmaci64
+*.o
+*.dylib

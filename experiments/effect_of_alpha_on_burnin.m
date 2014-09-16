@@ -8,7 +8,7 @@ t      = 1:20;
 moves  = {'pairwise'};
 % moves  = {'pairwise','shuffle','mergesplit'};
 
-alpha = [.001, .01, .25, .5, .75, .95, .99, .999];
+alpha = [0, .001, .01, .25, .5, .75, .95, .99, .999, 1];
 nExperiments = numel(alpha);
 
 mcmc_nIter = 250;
@@ -34,6 +34,9 @@ end
 
 %% RESULTS
 
+%convert LL to cumulative mean LL
+MLL = cellfun(@(ll) cumsum(ll) ./ (1:length(ll)), LL, 'UniformOutput', false);
+
 %note: display routines may be hardcoded to nExperiments...
 figure(1)
 plot(alpha, runtime,'o-')
@@ -46,6 +49,6 @@ hold on
 
 for iExperiment = 1:nExperiments
     subplot(nExperiments, 1, iExperiment)
-    plot(-LL{iExperiment})
+    plot(-MLL{iExperiment})
     title(num2str(alpha(iExperiment)))
 end

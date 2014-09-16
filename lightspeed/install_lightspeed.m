@@ -56,9 +56,9 @@ elseif ismac
 	% this installer is set up for 64-bit MacOSX 10.6 with gcc-4.0
 	% if you are using something else, run 'mex -v -c flops.c'
 	% and use the output to change these strings
-	options.COMPILER = 'gcc-4.0';
-	options.COMPFLAGS = '-fno-common -no-cpp-precomp -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk -mmacosx-version-min=10.6  -fexceptions';
-	options.OPTIMFLAGS = '-O -DNDEBUG';
+	options.COMPILER = 'clang';
+	options.COMPFLAGS = '-I/Applications/MATLAB_R2013a.app/extern/include -I/Applications/MATLAB_R2013a.app/simulink/include -DMATLAB_MEX_FILE -fno-common -arch x86_64 -isysroot /Applications/Xcode4.app/Contents/Developer//Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk -mmacosx-version-min=10.7  -fexceptions  -DMX_COMPAT_32';
+	options.OPTIMFLAGS = '-O2 -DNDEBUG';
 else
 	options = struct;
 	options.COMPILER = 'cc';

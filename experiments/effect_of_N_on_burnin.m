@@ -33,6 +33,9 @@ end
 
 %% RESULTS
 
+%convert LL to cumulative mean LL
+MLL = cellfun(@(ll) cumsum(ll) ./ (1:length(ll)), LL, 'UniformOutput', false);
+
 %note: display routines may be hardcoded to nExperiments...
 figure(1)
 plot(N, runtime,'o-')
@@ -45,6 +48,6 @@ hold on
 
 for iExperiment = 1:nExperiments
     subplot(nExperiments, 1, iExperiment)
-    plot(-LL{iExperiment})
+    plot(-MLL{iExperiment})
     title(num2str(N(iExperiment)))
 end

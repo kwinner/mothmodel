@@ -3,6 +3,7 @@
 #include <math.h>
 #include <strings.h>
 #include "ars.h"
+#include "mex.h"
 
 #ifdef MATLAB_MEX_FILE
 #define ERR(s) ( mexErrMsgTxt(s) )

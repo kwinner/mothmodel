@@ -51,7 +51,7 @@ p(:) = p(:) ./ sum(p(:));
 
 %% sample the q (outcome) values ~ Multinomial(N,p)
 
-q = mnrnd(N,p(:));
+q = sample_hist(p(:),N);
 q = reshape(q, T+1, T+1);
 
 %% compute n (the abundance at each observation t]
