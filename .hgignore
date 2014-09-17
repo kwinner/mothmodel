@@ -4,3 +4,4 @@ lightspeed
 *.mexmaci64
 *.o
 *.dylib
+*~
