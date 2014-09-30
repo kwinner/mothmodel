@@ -3,7 +3,7 @@ function [mu, sigma, lambda] = expectationmaximization (y, mu, sigma, lambda, N,
 N_ITERATIONS = 100;
 
 %options for fminunc
-options = optimoptions('fminunc', 'DerivativeCheck', 'on', 'GradObj', 'off');
+options = optimoptions('fmincon', 'DerivativeCheck', 'on', 'GradObj', 'on');
 
 %the start state for the E step is always the same
 [q_0, n_0] = naiveStateExplanation(y,N);
@@ -22,13 +22,19 @@ for iter = 1:N_ITERATIONS
 	Q = mcmc(P, q_0, n_0, y, alpha);
 	q = Q{end}; %this should be an average
 
-	theta = fminunc(@(theta) objective(theta(1), theta(2), theta(3), @(i)Tlookup(T,i), q), [mu, sigma, lambda], options);
+	problem = struct;
+	problem.objective = @(theta) objective(theta(1), theta(2), theta(3), @(i)Tlookup(T,i), q);
+	problem.x0        = [mu, sigma, lambda];
+	problem.lb        = [1, 1, 1];
+	problem.solver    = 'fmincon';
+	problem.options   = options;
+	theta = fmincon(problem);
 	mu = theta(1); sigma = abs(theta(2)); lambda = max(theta(3),0);
 end
 
 end
 
-function [y] =  objective (mu, sigma, lambda, T, Q)
+function [y, g] =  objective (mu, sigma, lambda, T, Q)
 %compute P from mu, sigma, lambda
 P = zeros(size(Q));
 for i = 1:size(P,1)
@@ -40,7 +46,6 @@ end
 %the objective function is simply the NLL of mu, sigma, lambda
 y = NLLtheta(Q, P);
 
-return
 g = zeros(1,3);
 
 %compute the gradient w.r.t. mu
