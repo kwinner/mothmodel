@@ -23,7 +23,7 @@ for iter = 1:N_ITERATIONS
 	q = Q{end}; %this should be an average
 
 	theta = fminunc(@(theta) objective(theta(1), theta(2), theta(3), @(i)Tlookup(T,i), q), [mu, sigma, lambda], options);
-	mu = theta(1); sigma = theta(2); lambda = theta(3);
+	mu = theta(1); sigma = abs(theta(2)); lambda = max(theta(3),0);
 end
 
 end
