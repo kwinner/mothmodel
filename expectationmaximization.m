@@ -3,7 +3,7 @@ function [mu, sigma, lambda] = expectationmaximization (y, mu, sigma, lambda, N,
 N_ITERATIONS = 100;
 
 %options for fminunc
-options = optimoptions('fmincon', 'DerivativeCheck', 'on', 'GradObj', 'on');
+options = optimoptions('fmincon', 'DerivativeCheck', 'off', 'GradObj', 'on');
 
 %the start state for the E step is always the same
 [q_0, n_0] = naiveStateExplanation(y,N);
@@ -121,52 +121,61 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %dmu sounds like french for 'the emu'
 function [grad] = gradientWRTmu (i, j, p_ij, q_ij, mu, sigma, lambda, T)
-%the form of the gradient is always q_i/p_i * dp_i/dtheta_k
-grad = q_ij/p_ij;;
-
-%inner gradient: dp_i/dmu
-%lambda component:
-grad = grad * (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
-%'inner' component:
-f_S = @(s) (s-mu)./(sigma^2) .* exp(lambda .* s) .* normpdf(s, mu, sigma);
-grad = grad * quadgk(f_S, T(i-1), T(i));
+integrand = @(s) (s-mu)/sigma^2 .* normpdf(s,mu,sigma) .* (expcdf(T(j)-s,lambda) - expcdf(T(j-1)-s,lambda));
+grad = quadgk(integrand, T(i-1), T(i));
 end
+% %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
+% grad = q_ij/p_ij;;
+
+% %inner gradient: dp_i/dmu
+% %lambda component:
+% grad = grad * (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
+% %'inner' component:
+% f_S = @(s) (s-mu)./(sigma^2) .* exp(lambda .* s) .* normpdf(s, mu, sigma);
+% grad = grad * quadgk(f_S, T(i-1), T(i));
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                      dp/dsigma
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [grad] = gradientWRTsigma (i, j, p_ij, q_ij, mu, sigma, lambda, T)
-%the form of the gradient is always q_i/p_i * dp_i/dtheta_k
-grad = q_ij/p_ij;;
-
-%inner gradient: dp_i/dmu
-%lambda component:
-grad = grad * (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
-%'inner' component:
-f_S = @(s) (((s-mu).^2)./(sigma^3) - 1/sigma) .* exp(lambda .* s) .* normpdf(s, mu, sigma);
-grad = grad * quadgk(f_S, T(i-1), T(i));
+integrand = @(s) ((s-mu).^2./sigma^3 - 1/sigma) .* normpdf(s,mu,sigma) .* (expcdf(T(j)-s,lambda) - expcdf(T(j-1)-s,lambda));
+grad = quadgk(integrand, T(i-1), T(i));
 end
+% %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
+% grad = q_ij/p_ij;;
+
+% %inner gradient: dp_i/dmu
+% %lambda component:
+% grad = grad * (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
+% %'inner' component:
+% f_S = @(s) (((s-mu).^2)./(sigma^3) - 1/sigma) .* exp(lambda .* s) .* normpdf(s, mu, sigma);
+% grad = grad * quadgk(f_S, T(i-1), T(i));
+% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                     dp/dlambda
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [grad] = gradientWRTlambda (i, j, p_ij, q_ij, mu, sigma, lambda, T)
-%the form of the gradient is always q_i/p_i * dp_i/dtheta_k
-grad = q_ij/p_ij;;
-
-%inner gradient: dp_i/dmu
-%note, the lambda gradient is unfortunately factored into two pieces (first, second)
-%first lambda component:
-first = (T(j) * exp(-lambda * T(j)) - T(j) * exp(-lambda * T(j-1)));
-%first 'inner' component:
-f1_S = @(s) exp(lambda .* s) .* normpdf(s, mu, sigma);
-first = first * quadgk(f1_S, T(i-1), T(i));
-
-%second lambda component:
-second = (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
-%second 'inner' component:
-f2_S = @(s) s .* exp(lambda .* s) .* normpdf(s, mu, sigma);
-second = second * quadgk(f2_S, T(i-1), T(i));
-
-grad = grad * (first + second);
+integrand = @(s) normpdf(s,mu,sigma) .* ((T(j)-s) .* (1-expcdf(T(j)-s)) - (T(j-1)-s) .* (1-expcdf(T(j-1)-s)));
+grad = quadgk(integrand, T(i-1), T(i));
 end
+% %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
+% grad = q_ij/p_ij;;
+
+% %inner gradient: dp_i/dmu
+% %note, the lambda gradient is unfortunately factored into two pieces (first, second)
+% %first lambda component:
+% first = (T(j) * exp(-lambda * T(j)) - T(j) * exp(-lambda * T(j-1)));
+% %first 'inner' component:
+% f1_S = @(s) exp(lambda .* s) .* normpdf(s, mu, sigma);
+% first = first * quadgk(f1_S, T(i-1), T(i));
+
+% %second lambda component:
+% second = (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
+% %second 'inner' component:
+% f2_S = @(s) s .* exp(lambda .* s) .* normpdf(s, mu, sigma);
+% second = second * quadgk(f2_S, T(i-1), T(i));
+
+% grad = grad * (first + second);
+% end
