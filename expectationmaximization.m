@@ -51,19 +51,19 @@ g = zeros(1,3);
 %compute the gradient w.r.t. mu
 for i = 1:size(P,1)
 	for j = i:size(P,2)
-		g(1) = g(1) + gradientWRTmu(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
+		g(1) = g(1) + Q(i,j)/P(i,j) * gradientWRTmu(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
 	end
 end
 %compute the gradient w.r.t. sigma
 for i = 1:size(P,1)
 	for j = i:size(P,2)
-		g(2) = g(2) + gradientWRTsigma(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
+		g(2) = g(2) + Q(i,j)/P(i,j) * gradientWRTsigma(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
 	end
 end
 %compute the gradient w.r.t. lambda
 for i = 1:size(P,1)
 	for j = i:size(P,2)
-		g(3) = g(3) + gradientWRTlambda(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
+		g(3) = g(3) + Q(i,j)/P(i,j) * gradientWRTlambda(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
 	end
 end
 
@@ -122,7 +122,7 @@ end
 %dmu sounds like french for 'the emu'
 function [grad] = gradientWRTmu (i, j, p_ij, q_ij, mu, sigma, lambda, T)
 integrand = @(s) (s-mu)/sigma^2 .* normpdf(s,mu,sigma) .* (expcdf(T(j)-s,lambda) - expcdf(T(j-1)-s,lambda));
-grad = quadgk(integrand, T(i-1), T(i));
+grad = q_ij / p_ij * quadgk(integrand, T(i-1), T(i));
 end
 % %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
 % grad = q_ij/p_ij;;
@@ -140,7 +140,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [grad] = gradientWRTsigma (i, j, p_ij, q_ij, mu, sigma, lambda, T)
 integrand = @(s) ((s-mu).^2./sigma^3 - 1/sigma) .* normpdf(s,mu,sigma) .* (expcdf(T(j)-s,lambda) - expcdf(T(j-1)-s,lambda));
-grad = quadgk(integrand, T(i-1), T(i));
+grad = q_ij / p_ij * quadgk(integrand, T(i-1), T(i));
 end
 % %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
 % grad = q_ij/p_ij;;
@@ -157,8 +157,21 @@ end
 %                                                                     dp/dlambda
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [grad] = gradientWRTlambda (i, j, p_ij, q_ij, mu, sigma, lambda, T)
-integrand = @(s) normpdf(s,mu,sigma) .* ((T(j)-s) .* (1-expcdf(T(j)-s)) - (T(j-1)-s) .* (1-expcdf(T(j-1)-s)));
-grad = quadgk(integrand, T(i-1), T(i));
+integrand = @(s) normpdf(s,mu,sigma) .* ((T(j)-s) .* (1-expcdf(T(j)-s,lambda)) - (T(j-1)-s) .* (1-expcdf(T(j-1,lambda)-s)));
+grad = q_ij / p_ij * quadgk(integrand, T(i-1), T(i));
+end
+function [integrand] = gradientWRTlambda_integrand (s, i, j, mu, sigma, lambda, T)
+z_max = T(j) - s;
+%note if T(j) == inf and s == inf, z_max = NaN
+%but if s (birthtime) == inf, and we're dying after the last observation, all deathtimes are valid
+z_max(isnan(z_max)) == inf;
+
+%note if T(j-1) == -inf and s == -inf, z_min = NaN
+%but if s (birthtime) == -inf, then all deathtimes are valid
+z_min = T(j-1) - s;
+z_min(isnan(z_min)) == 0;   %this occurs when T(j-1) and s are both -inf
+integrand = normpdf(s, mu, sigma);
+integrand = integrand .* ()
 end
 % %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
 % grad = q_ij/p_ij;;
