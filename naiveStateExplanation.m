@@ -46,7 +46,17 @@ for i = 1:T+1
     end
 end
 %stick all the 'unobserved' individuals in at the beginning: q(1,1)
-q(1,1) = N - sum(q(:));
+%new version: balance the unobserved ind. along the diagonal
+unobserved = N - sum(q(:));
+i = 1;
+while unobserved > 0
+    q(i,i) = q(i,i) + 1;
+    unobserved = unobserved - 1;
+    i = i + 1;
+    if i > T+1
+        i = 1;
+    end
+end
 
 n = abundancy(q);
 
