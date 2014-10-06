@@ -1,194 +1,135 @@
-function [mu, sigma, lambda] = expectationmaximization (y, mu, sigma, lambda, N, alpha, T)
+function [theta, state] = expectationmaximization (theta, params)
+%state  = the matrices/vectors making up the observations and outcomes
+%		  state.q
+%		  state.n (note: this is a function of q)
+%theta  = the parameters being optimized by EM
+%		  mu, sigma, lambda
+%params = the constant parameters
+%		  y, N, alpha, t
 
-N_ITERATIONS = 100;
+MAX_EM_ITERATIONS = 100;
 
 %options for fminunc
 options = optimoptions('fmincon', 'DerivativeCheck', 'off', 'GradObj', 'on');
 
-%the start state for the E step is always the same
-[q_0, n_0] = naiveStateExplanation(y,N);
+%initialize the state struct
+state = struct;
+[state.q, state.n] = naiveStateExplanation(params.y,params.N);
 
 %start the loop
-for iter = 1:N_ITERATIONS
-	%compute the p matrix
-	K = numel(T);
-	P = zeros(K+1,K+1);
-	for i = 1:K+1
-		for j = i:K+1
-			P(i,j) = pdf_p(i, j, mu, sigma, lambda, @(i) Tlookup(T,i));
-		end
-	end
+for iter = 2:MAX_EM_ITERATIONS+1
+	%% E step (sample new state: q and n)
+	%compute p from theta for mcmc
+	state(iter-1).p = pdf_p([theta(iter-1).mu, theta(iter-1).sigma, theta(iter-1).lambda],state(iter-1), params);
+	q_samples = mcmc(state(iter-1).p, state(iter-1).q, state(iter-1).n, params.y, params.alpha, 'iterations', 250);
+	state(iter).q = mean(cat(3,q_samples{:}),3);
+	state(iter).n = abundancy(state(iter).q);
+	% state(iter) = state(iter-1);
 
-	Q = mcmc(P, q_0, n_0, y, alpha);
-	q = Q{end}; %this should be an average
-
+	%% M step (optimize theta: mu, sigma, lambda)
 	problem = struct;
-	problem.objective = @(theta) objective(theta(1), theta(2), theta(3), @(i)Tlookup(T,i), q);
-	problem.x0        = [mu, sigma, lambda];
+	problem.objective = @(theta) objective(theta, state(iter), params);
+	problem.x0        = [theta(iter-1).mu, theta(iter-1).sigma, theta(iter-1).lambda];
 	problem.lb        = [1, 1, 1];
 	problem.solver    = 'fmincon';
 	problem.options   = options;
-	theta = fmincon(problem);
-	mu = theta(1); sigma = abs(theta(2)); lambda = max(theta(3),0);
+	theta_packed = fmincon(problem);
+	theta(iter).mu     = theta_packed(1);
+	theta(iter).sigma  = theta_packed(2);
+	theta(iter).lambda = theta_packed(3);
 end
 
 end
 
-function [y, g] =  objective (mu, sigma, lambda, T, Q)
-%compute P from mu, sigma, lambda
-P = zeros(size(Q));
-for i = 1:size(P,1)
-	for j = i:size(P,2)
-		P(i,j) = pdf_p(i, j, mu, sigma, lambda, T);
-	end
-end
+function [y, g] =  objective (theta, state, params)
+%compute p given the new values for theta
+state.p = pdf_p(theta, state, params);
 
 %the objective function is simply the NLL of mu, sigma, lambda
-y = NLLtheta(Q, P);
+y = -loglikelihood(state.p, state.q, state.n, params.y, params.alpha);
 
+%compute the gradients
 g = zeros(1,3);
-
-%compute the gradient w.r.t. mu
-for i = 1:size(P,1)
-	for j = i:size(P,2)
-		g(1) = g(1) + Q(i,j)/P(i,j) * gradientWRTmu(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
-	end
-end
-%compute the gradient w.r.t. sigma
-for i = 1:size(P,1)
-	for j = i:size(P,2)
-		g(2) = g(2) + Q(i,j)/P(i,j) * gradientWRTsigma(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
-	end
-end
-%compute the gradient w.r.t. lambda
-for i = 1:size(P,1)
-	for j = i:size(P,2)
-		g(3) = g(3) + Q(i,j)/P(i,j) * gradientWRTlambda(i, j, P(i,j), Q(i,j), mu, sigma, lambda, T);
-	end
-end
-
-end
-
-%% utility to put -inf and inf bounds on T while maintaining a sensible indexing scheme
-function [t] = Tlookup (T, i)
-	if i <= 0
-		t = -inf;
-	elseif i > numel(T)
-		t = inf;
-	else
-		t = T(i);
-	end
-end
-		
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                            neg log likelihood of theta given q
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%note: for optimization, P is precomputed as a function of theta
-function [NLL] = NLLtheta (Q, P)
-N = sum(Q(:));
-
-NLL = logfactorial(N);
-
-cellLL = logfactorial(Q) + Q .* logfactorial(P);
-
-%nans occur where P == 0, but correspondingly for those cells Q == 0, so 0 log 0 = 0
-NLL = NLL + sum(cellLL(~isnan(cellLL(:))));
-
+g(1) = gradientWRTtheta(theta, state, params, @gradientWRTmu_integrand);
+g(2) = gradientWRTtheta(theta, state, params, @gradientWRTsigma_integrand);
+g(3) = gradientWRTtheta(theta, state, params, @gradientWRTlambda_integrand);
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                           PDF for cell prob as a func of theta
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [p_ij] = pdf_p (i, j, mu, sigma, lambda, T)
-integrand = @(s) normpdf(s,mu,sigma) .* (expcdf(T(j)-s,lambda) - expcdf(T(j-1)-s,lambda));
-p_ij = quadgk(integrand, T(i-1), T(i));
+function [P] = pdf_p (theta, state, params)
+%for integration, use -inf and inf as min and max vals on t
+T = numel(params.t);
+params.t = [-inf, params.t, inf];
+P = zeros(T+1);
+for i = 1:T+1
+	for j = i:T+1
+		P(i,j) = quadgk(@(s) pdf_p_integrand(i, j, s, theta, params), params.t(i), params.t(i+1));
+	end
 end
-% function [p_ij] = pdf_p (i, j, mu, sigma, lambda, T)
-% %the part of f_p inside the integral, integrated from t_i to t_i+1
-% f_S = @(s) normpdf(s, mu, sigma) .* exp(lambda .* s);
-
-% p_ij = (exp(-lambda * T(j-1)) - exp(-lambda * T(j))) * quadgk(f_S, T(i-1), T(i));
-
-% if p_ij == 0
-% 	disp hello
-% end
-% end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                         dp/dmu
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%dmu sounds like french for 'the emu'
-function [grad] = gradientWRTmu (i, j, p_ij, q_ij, mu, sigma, lambda, T)
-integrand = @(s) (s-mu)/sigma^2 .* normpdf(s,mu,sigma) .* (expcdf(T(j)-s,lambda) - expcdf(T(j-1)-s,lambda));
-grad = q_ij / p_ij * quadgk(integrand, T(i-1), T(i));
 end
-% %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
-% grad = q_ij/p_ij;;
-
-% %inner gradient: dp_i/dmu
-% %lambda component:
-% grad = grad * (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
-% %'inner' component:
-% f_S = @(s) (s-mu)./(sigma^2) .* exp(lambda .* s) .* normpdf(s, mu, sigma);
-% grad = grad * quadgk(f_S, T(i-1), T(i));
-% end
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                      dp/dsigma
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [grad] = gradientWRTsigma (i, j, p_ij, q_ij, mu, sigma, lambda, T)
-integrand = @(s) ((s-mu).^2./sigma^3 - 1/sigma) .* normpdf(s,mu,sigma) .* (expcdf(T(j)-s,lambda) - expcdf(T(j-1)-s,lambda));
-grad = q_ij / p_ij * quadgk(integrand, T(i-1), T(i));
+function [integrand] = pdf_p_integrand (i, j, s, theta, params)
+mu = theta(1); sigma = theta(2); lambda = theta(3);
+[zmin, zmax] = lifespan_domain(params.t(j), params.t(j+1), s);
+integrand = normpdf(s, mu, sigma) .* (expcdf(zmax, lambda) - expcdf(zmin, lambda));
 end
-% %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
-% grad = q_ij/p_ij;;
-
-% %inner gradient: dp_i/dmu
-% %lambda component:
-% grad = grad * (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
-% %'inner' component:
-% f_S = @(s) (((s-mu).^2)./(sigma^3) - 1/sigma) .* exp(lambda .* s) .* normpdf(s, mu, sigma);
-% grad = grad * quadgk(f_S, T(i-1), T(i));
-% end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                                                                     dp/dlambda
+%                                                                      dp/dtheta
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [grad] = gradientWRTlambda (i, j, p_ij, q_ij, mu, sigma, lambda, T)
-integrand = @(s) normpdf(s,mu,sigma) .* ((T(j)-s) .* (1-expcdf(T(j)-s,lambda)) - (T(j-1)-s) .* (1-expcdf(T(j-1,lambda)-s)));
-grad = q_ij / p_ij * quadgk(integrand, T(i-1), T(i));
+
+%all of the gradients use the same common form, except the form of the integrand
+function [grad] = gradientWRTtheta (theta, state, params, integrand_fun)
+%for integration, use -inf and inf as min and max vals on t
+T = numel(params.t);
+params.t = [-inf, params.t, inf];
+
+%grad = - sum(q_i/p_i * d/dmu p_i)
+grad = 0;
+for i = 1:T+1
+	for j = i:T+1
+		grad = grad - state.q(i,j) / state.p(i,j) * quadgk(@(s) integrand_fun(i, j, s, theta, params), params.t(i), params.t(i+1));
+	end
 end
-function [integrand] = gradientWRTlambda_integrand (s, i, j, mu, sigma, lambda, T)
-z_max = T(j) - s;
-%note if T(j) == inf and s == inf, z_max = NaN
-%but if s (birthtime) == inf, and we're dying after the last observation, all deathtimes are valid
-z_max(isnan(z_max)) == inf;
+end
 
-%note if T(j-1) == -inf and s == -inf, z_min = NaN
-%but if s (birthtime) == -inf, then all deathtimes are valid
-z_min = T(j-1) - s;
-z_min(isnan(z_min)) == 0;   %this occurs when T(j-1) and s are both -inf
+%% d/dmu p_i
+function [integrand] = gradientWRTmu_integrand (i, j, s, theta, params)
+mu = theta(1); sigma = theta(2); lambda = theta(3);
+[zmin, zmax] = lifespan_domain(params.t(j), params.t(j+1), s);
+integrand = (s-mu)./(sigma.^2) .* normpdf(s, mu, sigma) .* (expcdf(zmax, lambda) - expcdf(zmin, lambda));
+end
+
+%% d/dsigma p_i
+function [integrand] = gradientWRTsigma_integrand (i, j, s, theta, params)
+mu = theta(1); sigma = theta(2); lambda = theta(3);
+[zmin, zmax] = lifespan_domain(params.t(j), params.t(j+1), s);
+integrand = ((s-mu).^2./(sigma.^3) - 1/sigma) .* normpdf(s, mu, sigma) .* (expcdf(zmax, lambda) - expcdf(zmin, lambda));
+end
+
+%% d/dlambda p_i
+function [integrand] = gradientWRTlambda_integrand (i, j, s, theta, params)
+mu = theta(1); sigma = theta(2); lambda = theta(3);
+[zmin, zmax] = lifespan_domain(params.t(j), params.t(j+1), s);
 integrand = normpdf(s, mu, sigma);
-integrand = integrand .* ()
+lhs = zmax ./ lambda .* exppdf(zmax, lambda);
+lhs(abs(zmax) == inf) = 0;
+rhs = zmin ./ lambda .* exppdf(zmin, lambda);
+rhs(abs(zmin) == inf) = 0;
+integrand = integrand .* (lhs - rhs);
+integrand = -integrand;
 end
-% %the form of the gradient is always q_i/p_i * dp_i/dtheta_k
-% grad = q_ij/p_ij;;
 
-% %inner gradient: dp_i/dmu
-% %note, the lambda gradient is unfortunately factored into two pieces (first, second)
-% %first lambda component:
-% first = (T(j) * exp(-lambda * T(j)) - T(j) * exp(-lambda * T(j-1)));
-% %first 'inner' component:
-% f1_S = @(s) exp(lambda .* s) .* normpdf(s, mu, sigma);
-% first = first * quadgk(f1_S, T(i-1), T(i));
-
-% %second lambda component:
-% second = (exp(-lambda * T(j-1)) - exp(-lambda * T(j)));
-% %second 'inner' component:
-% f2_S = @(s) s .* exp(lambda .* s) .* normpdf(s, mu, sigma);
-% second = second * quadgk(f2_S, T(i-1), T(i));
-
-% grad = grad * (first + second);
-% end
+%% utility function
+% there's a problem with the integration of F(zmax) - F(zmin)
+% F(z) is 0 for z <= 0, even though z \in [0,inf)
+% this isn't a problem for the pdf, but the gradients need to restrict z appropriately
+% especially dp/dlambda, which includes multiplication by zmin/zmax
+function [zmin, zmax] = lifespan_domain (death_min, death_max, birth)
+zmin = death_min - birth;
+zmin(death_min == birth) = 0;
+zmin = max(zmin, 0); %clamp z to 0
+zmax = death_max - birth;
+zmax(death_max == birth) = inf;
+end
