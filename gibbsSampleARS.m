@@ -1,4 +1,4 @@
-function [ qprime, nprime, normalizedLikelihood, success, move, deltaRange ] = gibbsSample( p, q, n, y, alpha, varargin )
+function [ qprime, nprime, success, move, deltaRange ] = gibbsSampleARS( p, q, n, y, alpha, varargin )
 %GIBBSSAMPLE sample a new state qprime by taking one step from q
 % this sampler can take three kinds of moves:
 %  pairwise    - take any two outcomes, redistribute the individuals in those two
@@ -62,7 +62,6 @@ switch move
         if posMax == 0 && negMax == 0
             qprime = q;
             nprime = n;
-            normalizedLikelihood = 1;
             success = false;
             deltaRange = 0;
             return
@@ -72,7 +71,7 @@ switch move
         changedPQ = sub2ind(size(p),[a c],[b d]);
         changedNY = union(nPos, nNeg);
 
-        delta = discrete_ars(@(delta) loglikelihoodofdeltapairwise(delta, p, q, n, y, alpha, a, b, c, d, changedPQ, changedNY, nPos, nNeg), deltaRange, deltaRange, 1);
+        delta = discrete_ars(@(delta) loglikelihoodofdeltapairwise(delta, p, q, n, y, alpha, a, b, c, d, changedPQ, changedNY, nPos, nNeg), deltaRange, [], 1);
         
         qprime = q;
         qprime(a,b) = q(a,b) + delta;
