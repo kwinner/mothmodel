@@ -12,11 +12,8 @@ switch mode
         y = x * log(x) - x + 1;
     case 'gamma'
         %note: gamma method is accurate, but undefined for x = 0
-        if x == 0
-            y = 0;
-        else
-            y = log(x) + gammaln(x);
-        end
+        y = log(x) + gammaln(x);
+        y(x == 0) = 0;
 end
 
 end
