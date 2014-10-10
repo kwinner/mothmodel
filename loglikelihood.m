@@ -54,8 +54,14 @@ end
 
 %% compute the posterior probability of y_i,n_i
 function [ prob ] = posterior( y_i, n_i, alpha )
-prob = logfactorial(n_i) - logfactorial(y_i) - logfactorial(n_i - y_i);
+epsilon = 1e-6;
+%fix for rounding error
+difference = n_i - y_i;
+if abs(difference) < epsilon
+    difference = 0;
+end
+prob = logfactorial(n_i) - logfactorial(y_i) - logfactorial(difference);
 if ~(y_i == 0 && alpha == 0) && ~(y_i == n_i && alpha == 1)
-    prob = prob + y_i * log(alpha) + (n_i - y_i) * log(1-alpha);    
+    prob = prob + y_i * log(alpha) + (difference) * log(1-alpha);    
 end
 end

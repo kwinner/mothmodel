@@ -34,21 +34,21 @@ switch move
         [c, d] = ind2sub_triu(T+1, i(2));
         
         %compute the range of valid values for delta, the # of indivs to move from q(c,d) to q(a,b)
-        posMax = q(a,b);
-        negMax = q(c,d);
+        posMax = fix(q(a,b));
+        negMax = fix(q(c,d));
         
         %further constrain posMax and negMax by their impact on n
         %each n_i must remain higher than the corresponding y_i
         nPos = union(a : (min(b,c) - 1), max(a,d) : (b - 1));
         if isempty(nPos) nPosSlack = Inf;
         else
-            nPosSlack = min(n(nPos) - y(nPos)); %the smallest difference between an nPos and its yPos
+            nPosSlack = fix(min(n(nPos) - y(nPos))); %the smallest difference between an nPos and its yPos
         end
         
         nNeg = union(c : (min(d,a) - 1), max(c,b) : (d - 1));
         if isempty(nNeg) nNegSlack = Inf;
         else
-            nNegSlack = min(n(nNeg) - y(nNeg));
+            nNegSlack = fix(min(n(nNeg) - y(nNeg)));
         end
         
         %max and min = smallest (closest to 0) values for delta

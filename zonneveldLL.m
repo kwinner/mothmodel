@@ -6,7 +6,11 @@ p = pdf_p(theta, t);
 
 %for each observation, compute the probability of being alive at that time
 %note, this is mathematically equivalent to finding abundance on p instead of q
-pt = abundancy(p);
+T = size(p,1) - 1;
+
+%from abundancy.mat, but real abundancy needs to cut out rounding error
+%each element of n is a 2D sum of a submatrix of q
+pt = arrayfun(@(k) sum(sum(p(1:k, k+1:T+1))), 1:T);
 
 %convert pt from "prob alive at t_k" to "prob observed at t_k"
 pt = alpha .* pt;

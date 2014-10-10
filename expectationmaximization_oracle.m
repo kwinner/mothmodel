@@ -1,4 +1,4 @@
-function [theta, state] = expectationmaximization (theta, params)
+function [theta, state] = expectationmaximization_oracle (state, theta, params)
 %state  = the matrices/vectors making up the observations and outcomes
 %		  state.q
 %		  state.n (note: this is a function of q)
@@ -7,28 +7,27 @@ function [theta, state] = expectationmaximization (theta, params)
 %params = the constant parameters
 %		  y, N, alpha, t
 
-MAX_EM_ITERATIONS = 100;
+MAX_EM_ITERATIONS = 1;
 
 %options for fminunc
 options = optimoptions('fmincon', 'DerivativeCheck', 'off', 'GradObj', 'on', 'Display', 'off');
 
 %initialize the state struct
-state = struct;
-[state.q, state.n] = naiveStateExplanation(params.y,params.N);
+% state = struct;
+% [state.q, state.n] = naiveStateExplanation(params.y,params.N);
 
 %start the loop
 for iter = 2:MAX_EM_ITERATIONS+1
-	% if mod(iter-1,5) == 0
-		fprintf('\t\titeration #%d/%d\n',iter-1,MAX_EM_ITERATIONS);
-	% end
+	if mod(iter-1,20) == 0
+		fprintf('\t\titeration #%d/%d\n',iter-1,MAX_EM_ITERATIONS-1);
+	end
 	%% E step (sample new state: q and n)
 	%compute p from theta for mcmc
-	state(iter-1).p = pdf_p([theta(iter-1).mu, theta(iter-1).sigma, theta(iter-1).lambda],state(iter-1), params);
-	q_samples = mcmc(state(iter-1).p, state(iter-1).q, state(iter-1).n, params.y, params.alpha, 'iterations', 250);
-% 	state(iter).q = mean(cat(3,q_samples{end-10:end}),3);
-    state(iter).q = q_samples{end};
-	state(iter).n = abundancy(state(iter).q);
-	% state(iter) = state(iter-1);
+	% state(iter-1).p = pdf_p([theta(iter-1).mu, theta(iter-1).sigma, theta(iter-1).lambda],state(iter-1), params);
+	% q_samples = mcmc(state(iter-1).p, state(iter-1).q, state(iter-1).n, params.y, params.alpha, 'iterations', 250);
+	% state(iter).q = mean(cat(3,q_samples{:}),3);
+	% state(iter).n = abundancy(state(iter).q);
+	state(iter) = state(iter-1);
 
 	%% M step (optimize theta: mu, sigma, lambda)
 	problem = struct;
