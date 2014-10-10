@@ -12,9 +12,12 @@ MAX_EM_ITERATIONS = 100;
 %options for fminunc
 options = optimoptions('fmincon', 'DerivativeCheck', 'off', 'GradObj', 'on', 'Display', 'off');
 
+[naiveQ, naiveN] = naiveStateExplanation(params.y, params.N);
+
 %initialize the state struct
 state = struct;
-[state.q, state.n] = naiveStateExplanation(params.y,params.N);
+state.q_samples = cell(1,1);
+state.q_samples{1} = naiveQ;
 
 %start the loop
 for iter = 2:MAX_EM_ITERATIONS+1
@@ -23,11 +26,11 @@ for iter = 2:MAX_EM_ITERATIONS+1
 	% end
 	%% E step (sample new state: q and n)
 	%compute p from theta for mcmc
-	state(iter-1).p = pdf_p([theta(iter-1).mu, theta(iter-1).sigma, theta(iter-1).lambda],state(iter-1), params);
-	q_samples = mcmc(state(iter-1).p, state(iter-1).q, state(iter-1).n, params.y, params.alpha, 'iterations', 250);
-% 	state(iter).q = mean(cat(3,q_samples{end-10:end}),3);
-    state(iter).q = q_samples{end};
-	state(iter).n = abundancy(state(iter).q);
+	state(iter-1).p = pdf_p([theta(iter-1).mu, theta(iter-1).sigma, theta(iter-1).lambda],state(iter-1).q_samples{end}, params);
+	state(iter).q_samples = mcmc(state(iter-1).p, naiveQ, naiveN, params.y, params.alpha, 'iterations', 1000);
+	state(iter).q_avg = mean(cat(3,state(iter).q_samples{end-20:end}),3);
+    % state(iter).q = q_samples{end};
+	% state(iter).n_avg = abundancy(state(iter).q_avg);
 	% state(iter) = state(iter-1);
 
 	%% M step (optimize theta: mu, sigma, lambda)
@@ -52,7 +55,7 @@ state.p = pdf_p(theta, state, params);
 %the objective function is simply the NLL of mu, sigma, lambda
 %which, if you drop the terms that are ind. of theta is just
 %the neg sum of all q_i * log p_i
-y = -sum(state.q(state.p~=0) .* log(state.p(state.p~=0)));
+y = -sum(state.q_avg(state.p~=0) .* log(state.p(state.p~=0)));
 
 %compute the gradients
 g = zeros(1,3);
@@ -95,7 +98,7 @@ params.t = [-inf, params.t, inf];
 grad = 0;
 for i = 1:T+1
 	for j = i:T+1
-		grad = grad - state.q(i,j) / state.p(i,j) * quadgk(@(s) integrand_fun(i, j, s, theta, params), params.t(i), params.t(i+1));
+		grad = grad - state.q_avg(i,j) / state.p(i,j) * quadgk(@(s) integrand_fun(i, j, s, theta, params), params.t(i), params.t(i+1));
 	end
 end
 end
