@@ -1,11 +1,12 @@
 function [theta_zonn] = zonneveldtheta(params) 
 
-options = optimoptions('fmincon', 'Algorithm', 'interior-point', 'Display', 'off');
+options = optimoptions('fmincon', 'Algorithm', 'interior-point','Diagnostics','on');%, 'Display', 'on');
 
 problem = struct;
 problem.objective = @(theta) -zonneveldLL(theta, params.y, params.N, params.alpha, params.t);
 problem.x0        = [1,1,1];
 problem.lb        = [1,1,1];
+problem.ub        = [50,50,50];
 problem.solver    = 'fmincon';
 problem.options   = options;
 

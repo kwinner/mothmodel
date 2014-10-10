@@ -55,5 +55,6 @@ zmin = death_min - birth;
 zmin(death_min == birth) = 0;
 zmin = max(zmin, 0); %clamp z to 0
 zmax = death_max - birth;
+zmax = max(zmax, zmin);
 zmax(death_max == birth) = inf;
 end
