@@ -1,15 +1,15 @@
 function [ LL ] = loglikelihood( p, q, n, y, alpha, varargin )
 %compute the LOG LIKELIHOOD
-%note: p,q,n,y do not need to be complete. 
+%note: p,q,n,y do not need to be complete.
 % you can use corresponding subsets to compute an unnormalized LL faster
 
 %the calculation mode.
 %  pdf is much quicker, but has numerical under/overflow problems in some cases
 %  stable is more stable, but not optimized for speed
-DEFAULT_MODE = 'stable'; %stable, pdf
+DEFAULT_MODE = 'dan'; %stable, pdf
 
 parser = inputParser;
-addParamValue(parser,'mode',DEFAULT_MODE, @(x) any(validatestring(x,{'stable','pdf'})));
+addParamValue(parser,'mode',DEFAULT_MODE, @(x) any(validatestring(x,{'stable','pdf', 'dan'})));
 
 parse(parser,varargin{:});
 
@@ -25,8 +25,8 @@ switch mode
             LL = LL + log(binopdf(y(i), n(i), alpha));
         end
     case 'stable'
-        N = sum(q(:));
         
+        N = sum(q(:));
         LL = logfactorial(N);
         
         if ~isempty(p)
@@ -40,6 +40,9 @@ switch mode
             %stable log of (n_i nchoosek y_i) * alpha^y_i * (1-alpha)^(n_i-y_i)
             LL = LL + sum(arrayfun(@(y_i,n_i) posterior(y_i,n_i,alpha),y(:),n(:)));
         end
+    case 'dan'
+        N = sum(q(:));
+        LL = gammaln(N+1) + sum(alogb(q(:), p(:))) - sum(gammaln(q(:)+1)) + sum(logbinopdf(y, n, alpha));
 end
 end
 
@@ -62,6 +65,11 @@ if abs(difference) < epsilon
 end
 prob = logfactorial(n_i) - logfactorial(y_i) - logfactorial(difference);
 if ~(y_i == 0 && alpha == 0) && ~(y_i == n_i && alpha == 1)
-    prob = prob + y_i * log(alpha) + (difference) * log(1-alpha);    
+    prob = prob + y_i * log(alpha) + (difference) * log(1-alpha);
 end
+end
+
+function s = alogb(a, b)
+s = a.*log(b);
+s(a==0) = 0;
 end
