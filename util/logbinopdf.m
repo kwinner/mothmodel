@@ -29,9 +29,9 @@ end
 
 % Initialize Y to zero.
 if isa(x,'single') || isa(n,'single') || isa(p,'single')
-   y = zeros(size(x),'single');
+   y = -inf(size(x),'single');
 else
-   y = zeros(size(x));
+   y = -inf(size(x));
 end
 y(isnan(x) | isnan(n) | isnan(p)) = NaN;
 
@@ -67,14 +67,14 @@ if any(k)
     if any(t)
         kt = k(t);
 %        y(kt) = exp(n(kt).*log(1-p(kt)));
-        y(kt) = n(kt) + log(1-p(kt));
+        y(kt) = n(kt) .* log(1-p(kt));
         k(t) = [];
     end
     t = (x(k)==n(k));
     if any(t)
         kt = k(t);
 %        y(kt) = exp(n(kt).*log(p(kt)));
-        y(kt) = n(kt) + log(p(kt));
+        y(kt) = n(kt) .* log(p(kt));
         k(t) = [];
     end
 end
