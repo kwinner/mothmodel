@@ -1,7 +1,7 @@
 function [ state ] = mcmc( y, state_0, params, varargin )
 
 DEFAULT_ITERATIONS = 1000;
-DEFAULT_MOVES      = {'pairwise', 'shuffle', 'mergesplit'};
+DEFAULT_MOVES      = {'pairwise', 'shuffle', 'mergesplit', 'cycle'};
 
 parser = inputParser;
 addParamValue(parser, 'iterations', DEFAULT_ITERATIONS, @isnumeric);
@@ -105,6 +105,12 @@ switch move
 
 		NLL = normalizeLikelihood(UNLL);
 
+		if any(NLL < 0) || all(NLL == 0)
+			success = false;
+			state = state_0;
+			return
+		end
+
 		%randomly sample delta from the normalized LL
 		delta = deltaRange(randsample(numel(deltaRange), 1, true, NLL));
 
@@ -130,6 +136,13 @@ switch move
 		UNLL = UNLL(UNLL ~= inf);
 
 		NLL = normalizeLikelihood(UNLL);
+
+		if any(NLL < 0) || all(NLL == 0)
+			success = false;
+			state = state_0;
+			return
+		end
+
 
 		%randomly sample delta from the normalized LL
 		delta = deltaRange(randsample(numel(deltaRange), 1, true, NLL));
@@ -164,11 +177,58 @@ switch move
 
 		NLL = normalizeLikelihood(UNLL);
 
+		if any(NLL < 0) || all(NLL == 0)
+			success = false;
+			state = state_0;
+			return
+		end
+
 		%randomly sample delta from the normalized LL
 		delta = deltaRange(randsample(numel(deltaRange), 1, true, NLL));
 
 		state = applydelta_ms(delta, state_0, move);
 		success = true;
+    case 'cycle'
+        move = struct;
+        temp = sort(randsample(T+1, 4, true));
+        move.i = temp(1); move.iprime = temp(2); move.j = temp(3); move.jprime = temp(4);
+        
+        if move.i == move.jprime
+            %accidentally sampled a cycle on a 1x1 quad, which is illegal
+            %or at least pointless
+            success = false;
+            state = state_0;
+            return
+        end
+        
+        %max that can be taken from the cells that change with delta
+        maxPos = min(state_0.q(move.i,move.j), state_0.q(move.iprime, move.jprime));
+        %max that can be taken from the cells that change opposite to delta
+        maxNeg = min(state_0.q(move.i,move.jprime), state_0.q(move.iprime, move.j));
+        
+        deltaRange = -maxPos:maxNeg;
+        
+        %compute the LL over all possible delta
+        move.applydelta = @applydelta_cycle;
+        UNLL = arrayfun(@(delta) loglikelihoodofdelta(delta, state_0, y, params, move), deltaRange);
+        
+        %this shouldn't ever happen
+        deltaRange = deltaRange(UNLL ~= inf);
+        UNLL = UNLL(UNLL ~= inf);
+        
+        NLL = normalizeLikelihood(UNLL);
+        
+        if any(NLL < 0) || all(NLL == 0)
+            success = false;
+            state = state_0;
+            return
+        end
+        
+        %randomly sample delta
+        delta = deltaRange(randsample(numel(deltaRange), 1, true, NLL));
+        
+        state = applydelta_cycle(delta, state_0, move);
+        success = true;
 end
 
 end
@@ -196,6 +256,16 @@ state_prime.q(move.i, move.k) = state.q(move.i, move.k) + delta;
 state_prime.q(move.j, move.j) = state.q(move.j, move.j) + delta;
 state_prime.q(move.i, move.j) = state.q(move.i, move.j) - delta;
 state_prime.q(move.j, move.k) = state.q(move.j, move.k) - delta;
+
+end
+
+function [ state_prime ] = applydelta_cycle( delta, state, move )
+
+state_prime = state;
+state_prime.q(move.i,      move.j)      = state.q(move.i,      move.j)      + delta;
+state_prime.q(move.iprime, move.jprime) = state.q(move.iprime, move.jprime) + delta;
+state_prime.q(move.i,      move.jprime) = state.q(move.i,      move.jprime) - delta;
+state_prime.q(move.iprime, move.j)      = state.q(move.iprime, move.j)      - delta;
 
 end
 

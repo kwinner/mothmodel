@@ -2,7 +2,9 @@ function [theta, state, runtime] = stochupEM(y, params, theta_0, varargin)
 
 DEFAULT_EM_ITERATIONS   = 200;           %how many iterations to run EM
 DEFAULT_MIXING_PARAM    = .2;            %what percent of Q from E step to add to the running Q
+DEFAULT_INITIAL_MCMC_ITERATIONS = 50000; %how many iterations to run for the first iteration of MCMC
 DEFAULT_MCMC_ITERATIONS = 100;           %how many iterations to run MCMC for during E step
+DEFAULT_INITIAL_MCMC_BURNIN = 40000;      %how many iterations of the first MCMC pass to throw away
 DEFAULT_MCMC_BURNIN     = 50;            %how many iterations of MCMC to throw away
 DEFAULT_GRADIENTS       = 'off';         %whether to use my gradient functions
 DEFAULT_THETA_LB        = [1 1 1];       %lower bounds on the values of theta
@@ -13,29 +15,33 @@ parser = inputParser;
 addRequired(parser, 'y');
 addRequired(parser, 'params');
 addRequired(parser, 'theta_0');
-addParamValue(parser, 'state_0',         []);
-addParamValue(parser, 'EM_iterations',   DEFAULT_EM_ITERATIONS);
-addParamValue(parser, 'mixing_param' ,   DEFAULT_MIXING_PARAM);
-addParamValue(parser, 'MCMC_iterations', DEFAULT_MCMC_ITERATIONS);
-addParamValue(parser, 'MCMC_burnin',     DEFAULT_MCMC_BURNIN);
-addParamValue(parser, 'gradients',       DEFAULT_GRADIENTS);
-addParamValue(parser, 'theta_lb',        DEFAULT_THETA_LB);
-addParamValue(parser, 'theta_ub',        DEFAULT_THETA_UB);
-addParamValue(parser, 'oracle',          false);
+addParamValue(parser, 'state_0',                 []);
+addParamValue(parser, 'EM_iterations',           DEFAULT_EM_ITERATIONS);
+addParamValue(parser, 'mixing_param' ,           DEFAULT_MIXING_PARAM);
+addParamValue(parser, 'initial_MCMC_iterations', DEFAULT_INITIAL_MCMC_ITERATIONS);
+addParamValue(parser, 'MCMC_iterations',         DEFAULT_MCMC_ITERATIONS);
+addParamValue(parser, 'initial_MCMC_burnin',     DEFAULT_INITIAL_MCMC_BURNIN);
+addParamValue(parser, 'MCMC_burnin',             DEFAULT_MCMC_BURNIN);
+addParamValue(parser, 'gradients',               DEFAULT_GRADIENTS);
+addParamValue(parser, 'theta_lb',                DEFAULT_THETA_LB);
+addParamValue(parser, 'theta_ub',                DEFAULT_THETA_UB);
+addParamValue(parser, 'oracle',                  false);
 
 parser.parse(y, params, theta_0, varargin{:});
-y               = parser.Results.y;
-params          = parser.Results.params;
-theta_0         = parser.Results.theta_0;
-state_0         = parser.Results.state_0;
-EM_iterations   = parser.Results.EM_iterations;
-mixing_param    = parser.Results.mixing_param;
-MCMC_iterations = parser.Results.MCMC_iterations;
-MCMC_burnin     = parser.Results.MCMC_burnin;
-gradients       = parser.Results.gradients;
-theta_lb        = parser.Results.theta_lb;
-theta_ub        = parser.Results.theta_ub;
-oracle          = parser.Results.oracle;
+y                       = parser.Results.y;
+params                  = parser.Results.params;
+theta_0                 = parser.Results.theta_0;
+state_0                 = parser.Results.state_0;
+EM_iterations           = parser.Results.EM_iterations;
+mixing_param            = parser.Results.mixing_param;
+initial_MCMC_iterations = parser.Results.initial_MCMC_iterations;
+MCMC_iterations         = parser.Results.MCMC_iterations;
+initial_MCMC_burnin     = parser.Results.initial_MCMC_burnin;
+MCMC_burnin             = parser.Results.MCMC_burnin;
+gradients               = parser.Results.gradients;
+theta_lb                = parser.Results.theta_lb;
+theta_ub                = parser.Results.theta_ub;
+oracle                  = parser.Results.oracle;
 
 %we do /need/ an initial state, but we can use the naive one if one is not provided
 if isempty(state_0)
@@ -68,14 +74,23 @@ for iter = 2:EM_iterations+1
 		%oracle means state_0 should have been the true state, don't need any more E step
 		state{iter} = state{iter-1};
 	else
-		state{iter} = mcmc(y, state{iter-1}(end), params, 'iterations', MCMC_iterations);
+		if iter == 2 %'first' iteration
+			state{iter} = mcmc(y, state{iter-1}(end), params, 'iterations', initial_MCMC_iterations);	
+		else
+			state{iter} = mcmc(y, state{iter-1}(end), params, 'iterations', MCMC_iterations);
+		end
 	end
 
 	%% -processing-
 	%compute the average q from the final runs of the E step
 	if length(state{iter}) > 1
-		qmean = mean(cat(3,state{iter}(max(1,end-MCMC_burnin):end).q),3);
-		qhat = (1-mixing_param) .* qhat + mixing_param .* qmean;
+		if iter == 2
+			qmean = mean(cat(3,state{iter}(max(1,end-initial_MCMC_burnin):end).q),3);
+			qhat = qmean;
+		else
+			qmean = mean(cat(3,state{iter}(max(1,end-MCMC_burnin):end).q),3);
+			qhat = (1-mixing_param) .* qhat + mixing_param .* qmean;
+		end
 	else
 		qhat = (1-mixing_param) .* qhat + mixing_param .* state{iter}.q;
     end

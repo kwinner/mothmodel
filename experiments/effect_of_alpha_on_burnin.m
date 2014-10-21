@@ -3,29 +3,35 @@ N      = 100;
 mu     = 8;
 sigma  = 4;
 lambda = 3;
+theta = struct('mu', mu, 'sigma', sigma, 'lambda', lambda);
 % alpha  = .5;
 t      = 1:20;
 moves  = {'pairwise'};
 % moves  = {'pairwise','shuffle','mergesplit'};
 
-alpha = [0, .001, .01, .25, .5, .75, .95, .99, .999, 1];
+alpha = [0.5 1];
 nExperiments = numel(alpha);
 
-mcmc_nIter = 250;
+mcmc_nIter = 1500;
+
 
 %% EXPERIMENT
 LL      = cell(1,nExperiments);
 runtime = zeros(1,nExperiments);
+Q = cell(1,nExperiments);
 for iExperiment = 1:nExperiments
-    %generate the true data
-    [y, q, n, p] = sampleState(N, mu, sigma, lambda, alpha(iExperiment), t);
+    params = struct('N', N, 'alpha', alpha(iExperiment), 't', t);
+    
+    %generate the observations
+    y = sampleState(theta, params);
     
     %generate the naive start state
-    [q_0, n_0] = naiveStateExplanation(y,N);
+    state_0 = naiveStateExplanation(y,N);
+    state_0.p = ppdf(theta, params);
     
     %run MCMC for a bit
     tic
-    [~,~,LL{iExperiment}] = mcmc(p,q_0,n_0,y,alpha(iExperiment),'iterations',mcmc_nIter,'moves',moves);
+    [Q] = mcmc(p,q_0,n_0,y,alpha(iExperiment),'iterations',mcmc_nIter,'moves',moves);
     runtime(iExperiment) = toc;
     
     format

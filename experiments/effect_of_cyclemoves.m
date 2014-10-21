@@ -6,6 +6,9 @@ lambda = 3;
 alpha  = .8;
 t      = 1:20;
 
+params = struct('N', N, 'alpha', alpha, 't', t);
+theta = struct('mu', mu, 'sigma', sigma, 'lambda', lambda);
+
 ALL_MOVES  = {'pairwise','shuffle','mergesplit'};
 moves      = {1,[1,2],[1,3],[1,2,3],[2,3]};
 

@@ -15,7 +15,8 @@ T = length(params.t);
 state.p = ppdf(theta, params);
 
 %% sample the q (outcome) values ~ Multinomial(N,p)
-state.q = sample_hist(state.p(:), params.N);
+% state.q = sample_hist(state.p(:), params.N);
+state.q = mnrnd(params.N, state.p(:));
 state.q = reshape(state.q, T+1, T+1);
 
 %% compute n (the abundance at each observation t]
