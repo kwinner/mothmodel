@@ -17,22 +17,20 @@ T = numel(params.t);
 P  = ppdf(theta, params); %matrix of all birth/death outcome probs
 Pb = sum(P,1);            %vector of all birth probs
 
-%do the prior CI
-samples = zeros(MCMCsteps,T+1)
-for isample = 1:MCMCsteps
-	samples(isample,:) = binornd(params.N, Pb);
-end
-
-%compute the CI for the mean of a binomial with samples of each column
-for iinterval = 1:T+1
-end
-
 %sample state from P
 [y, state] = sampleState(theta, params);
 
 %fit the prior distribution on B
 %B(i) ~ Binomial(N, Pb(i));
-[~, pci_prior] = binofit(B, params.N, alpha);
+B_0 = sum(state.q,1);
+[p_hat_prior, p_ci_prior] = binofit(B_0, params.N, alpha);
+%convert from a CI on p to a CI on B
+B_ci_prior = params.N .* p_ci_prior;
+
+%compute a "CI" from the inverse CDF
+B_ci_icdf_LB = binoinv(alpha/2, params.N, Pb);
+B_ci_icdf_UB = binoinv(1-(alpha/2), params.N, Pb);
+B_ci_icdf = [B_ci_icdf_LB ; B_ci_icdf_UB]';
 
 %run mcmc
 naive_state = naiveStateExplanation(y, params.N);
@@ -54,4 +52,16 @@ B = sort(B,1);
 %keep a CI worth of the B samples
 CIsize = round(MCMCsteps * (1-alpha));
 B = B(round((MCMCsteps - CIsize)/2):end-round((MCMCsteps - CIsize)/2),:);
-pci_post = B([1,end],:)';
+B_ci_post = B([1,end],:)';
+
+%okay now we have 3 CIs, let's compare their width
+B_ci_prior_width = B_ci_prior(:,2) - B_ci_prior(:,1);
+B_ci_icdf_width  = B_ci_icdf(:,2)  - B_ci_icdf(:,1);
+B_ci_post_width  = B_ci_post(:,2)  - B_ci_post(:,1);
+
+figure
+plot(1:T+1, B_ci_prior_width, 1:T+1, B_ci_icdf_width, 1:T+1, B_ci_post_width);
+legend({'prior','icdf','post'})
+title('Width of confidence interval');
+ylabel('CI width');
+xlabel('Interval');
