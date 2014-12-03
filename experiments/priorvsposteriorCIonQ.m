@@ -60,8 +60,19 @@ B_ci_icdf_width  = B_ci_icdf(:,2)  - B_ci_icdf(:,1);
 B_ci_post_width  = B_ci_post(:,2)  - B_ci_post(:,1);
 
 figure
-plot(1:T+1, B_ci_prior_width, 1:T+1, B_ci_icdf_width, 1:T+1, B_ci_post_width);
-legend({'prior','icdf','post'})
-title('Width of confidence interval');
-ylabel('CI width');
-xlabel('Interval');
+plot(1:T+1, B_ci_icdf_width,  '-', ...
+	 1:T+1, B_ci_post_width,  '-')
+legend({'icdf','post'})
+title('Width of confidence interval')
+ylabel('CI width')
+xlabel('Interval')
+
+figure
+hold on
+h2 = plot(1:T+1, B_ci_icdf,  'color', 'green'); h2 = h2(1);
+h3 = plot(1:T+1, B_ci_post,  'color', 'red');   h3 = h3(1);
+h4 = plot(1:T+1, B_0, 'o',   'color', 'black')
+legend([h2 h3],{'icdf','post'})
+title('Births per interval')
+ylabel('B')
+xlabel('Interval')

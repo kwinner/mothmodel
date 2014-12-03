@@ -2,7 +2,7 @@ function results = EM_effect_of_lambda_on_param_estimation()
 
 %controllable parameters
 % lambda_space = [2, 4, 8, 12, 16, 20, 30, 50];
-lambda_space = [14];
+lambda_space = [2,4,6,8,10,12,14,16,18,20,22,24,26,28,30];
 nRepeats     = 1;
 
 %computed from controlled params
@@ -17,7 +17,7 @@ for i = 1:nLambda
 end
 theta_cold = struct('mu',1,'sigma',1,'lambda',1);
 
-params = struct('N',25,'alpha',.8,'t',10:10:100);
+params = struct('N',100,'alpha',.8,'t',10:10:100);
 
 state = struct('p', [], 'q',[],'n',[]);
 
@@ -39,6 +39,7 @@ for iRepeat = 1:nRepeats
 		results(iExperiment).theta   = theta(iLambda);
 		results(iExperiment).params  = params;
 		results(iExperiment).state   = state(iExperiment);
+        results(iExperiment).y       = y;
 
 		%give zonneveld a crack at it
 		fprintf('\tZonneveld...\n');
