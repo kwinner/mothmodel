@@ -1,6 +1,6 @@
 function coverage = CIcoverage(theta_0, params, varargin)
 
-DEFAULT_ITERATIONS = 10;
+DEFAULT_ITERATIONS = 3;
 
 parser = inputParser;
 
@@ -14,8 +14,8 @@ theta_0     = parser.Results.theta_0;
 params      = parser.Results.params;
 niterations = parser.Results.iterations;
 
-nparams   = numel(params);
-coverage  = zeros(1, nparams);
+nparams   = numel(theta_0);
+coverage  = zeros(niterations, nparams);
 
 theta_0_mat = [theta_0.mu, theta_0.sigma, theta_0.lambda];
 
@@ -32,12 +32,13 @@ for iteration = 1:niterations
 	%check which CIs cover theta_0
 	for iparam = 1:nparams
 		if CI_i(1, iparam) <= theta_0_mat(iparam) && CI_i(2, iparam) >= theta_0_mat(iparam)
-			coverage(iparam) = coverage(iparam) + 1;
+			coverage(iteration, iparam) = 1;
 		end
 	end
 end
 
 %normalize the coverage counter
+coverage = sum(coverage, 1);
 coverage = coverage ./ niterations;
 
 end
