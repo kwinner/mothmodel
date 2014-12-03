@@ -1,6 +1,6 @@
 function coverage = CIcoverage(theta_0, params, varargin)
 
-DEFAULT_ITERATIONS = 3;
+DEFAULT_ITERATIONS = 2;
 
 parser = inputParser;
 
@@ -14,15 +14,16 @@ theta_0     = parser.Results.theta_0;
 params      = parser.Results.params;
 niterations = parser.Results.iterations;
 
-nparams   = numel(theta_0);
-coverage  = zeros(niterations, nparams);
-
 theta_0_mat = [theta_0.mu, theta_0.sigma, theta_0.lambda];
 
+nparams   = numel(theta_0_mat);
+coverage  = zeros(niterations, nparams);
+
 for iteration = 1:niterations
-	if mod(iteration, 10) == 0 || 1 == 1
-		fprintf('iteration #%d...\n', iteration);
-	end
+	% if mod(iteration, 10) == 0
+	% 	fprintf('iteration #%d...\n', iteration);
+	% end
+	
 	%sample from the true theta
 	y_i     = sampleState(theta_0, params);
 
