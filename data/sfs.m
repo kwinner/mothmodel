@@ -3,7 +3,7 @@ function [ data ] = sfs ( filename )
 %   Detailed explanation goes here
 
 if ~exist('filename', 'var')
-	filename = '/Users/kwinn/Work/Data/moth/sfs2004.csv';
+	filename = '/Users/kwinner/Work/data/moth/sfs2004.csv';
 end
 
 data = csv2struct(filename, '%s%f%f%f%f');
