@@ -1,6 +1,6 @@
 MU = [0:1:20];    mu_0 = 9.5;
 SIGMA = [.1:.1:8];   sigma_0 = 2.8;
-LAMBDA = [0.1:.1:5];  lambda_0 = 1/.672;
+LAMBDA = [0.1:.1:15];  lambda_0 = 7;
 
 alpha = .27;
 N     = 73;
