@@ -1,13 +1,14 @@
-MU = [0:1:20];    mu_0 = 9.5;
+MU = 5:1:13;    mu_0 = 9.5;
 SIGMA = [.1:.1:8];   sigma_0 = 2.8;
-LAMBDA = [0.1:.1:15];  lambda_0 = 7;
+LAMBDA = [0.1:.25:15];  lambda_0 = 7;
 
-alpha = .27;
-N     = 73;
+alpha = 1;
+N     = 50;
 
-realdata = sfs;
-t = [realdata(~isnan([realdata.E2])).t] + 1;
-y = [realdata(~isnan([realdata.E2])).E2];
+%realdata = sfs;
+%t = [realdata(~isnan([realdata.E2])).t] + 1;
+%y = [realdata(~isnan([realdata.E2])).E2];
+t = 0:5:40;
 y = sampleState(struct('mu', mu_0, 'sigma', sigma_0, 'lambda', lambda_0), struct('N', N, 'alpha', alpha, 't', t));
 
 %hold mu fixed, vary sigma, lambda
@@ -28,19 +29,23 @@ y = sampleState(struct('mu', mu_0, 'sigma', sigma_0, 'lambda', lambda_0), struct
 % ylabel('Lambda');
 
 %hold sigma fixed, vary mu, lambda
-tic
 LLzonn_mulambda = zeros(numel(MU), numel(LAMBDA));
 LLGP_mulambda = zeros(numel(MU), numel(LAMBDA));
+cnt = 1;
+tot = numel(LLzonn_mulambda);
 for imu = 1:numel(MU)
 	for ilambda = 1:numel(LAMBDA)
-		mu     = MU(imu);
+        tic
+        mu     = MU(imu);
 		lambda = LAMBDA(ilambda);
 
 		LLzonn_mulambda(imu, ilambda) = -zonn_loglikelihood(y, [mu, sigma_0], lambda, t, alpha, N);
 		LLGP_mulambda(imu, ilambda)   = -GPLL(struct('mu',mu,'sigma',sigma_0,'lambda',lambda), y, struct('N',N,'alpha',alpha,'t',t));
-	end
+
+        fprintf('Iter %d/%d done in %.2f seconds\n', cnt, tot, toc);
+        cnt = cnt + 1;
+    end
 end
-runtime = toc
 
 figure
 hold on

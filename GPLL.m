@@ -18,6 +18,9 @@ obsMean = params.alpha * params.N .* pt;
 obsCov = GPcov(pt, theta, params);
 
 %compute the LL
-LL = log(mvnpdf(y, obsMean, obsCov));
+%LL = log(mvnpdf(y, obsMean, obsCov));
+LL = mvnormpdfln(y', obsMean', [], obsCov);
+
+%fprintf('LL=%.2e, LL1=%.2e, diff=%.2e\n', LL, LL1, LL-LL1);
 
 end
