@@ -32,8 +32,11 @@ end
 
 %the meat and potatoes, prob of birth * prob of lifespan
 function [value] = integrand(i, j, s, mu, sigma, lambda, params)
-DEFAULT_LOGISTIC_MIX = 0;
 
 [zmin, zmax] = lifespan_domain(s, params.t(j), params.t(j+1));
-value = ((1-DEFAULT_LOGISTIC_MIX).*normpdf(s, mu, sigma)+DEFAULT_LOGISTIC_MIX.*pdf('logistic',s,mu,sigma)) .* (expcdf(zmax, lambda) - expcdf(zmin, lambda));
+
+%DEFAULT_LOGISTIC_MIX = 0;
+%value = ((1-DEFAULT_LOGISTIC_MIX).*normpdf(s, mu, sigma)+DEFAULT_LOGISTIC_MIX.*pdf('logistic',s,mu,sigma)) .* (expcdf(zmax, lambda) - expcdf(zmin, lambda));
+value = normpdf(s, mu, sigma) .* (expcdf(zmax, lambda) - expcdf(zmin, lambda));
+
 end
