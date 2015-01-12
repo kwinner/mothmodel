@@ -31,7 +31,7 @@ for iExperiment = 1:nExperiments
     
     %run MCMC for a bit
     tic
-    [Q] = mcmc(p,q_0,n_0,y,alpha(iExperiment),'iterations',mcmc_nIter,'moves',moves);
+    [Q] = mcmc(y,state_0,params,'iterations',mcmc_nIter,'moves',moves);
     runtime(iExperiment) = toc;
     
     format
