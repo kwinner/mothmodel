@@ -175,7 +175,7 @@ void insert_piece(piecewise_linear_fun *g,
     piece *lastp = 0;
     while( p && p->x <= x )
     {
-	lastp = 0;
+	lastp = p;
 	p = p->next;
     }
 
