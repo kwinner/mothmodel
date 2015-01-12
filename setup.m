@@ -10,4 +10,10 @@ cd(sprintf('%s/lib/discrete-ars-0.1', root));
 make;
 cd(curdir);
 
+disp 'Building dbinom'
+cd(sprintf('%s/util', root));
+mex dbinom.c
+cd(curdir);
+
+
 end
