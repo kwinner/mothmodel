@@ -38,7 +38,7 @@ for imu = 1:numel(MU)
         tic
         mu     = MU(imu);
 		lambda = LAMBDA(ilambda);
-
+		N      = N_RANGE(iN);
 		LLzonn_mulambda(imu, ilambda) = -zonn_loglikelihood(y, [mu, sigma_0], lambda, t, alpha, N);
 		LLGP_mulambda(imu, ilambda)   = -GPLL(struct('mu',mu,'sigma',sigma_0,'lambda',lambda), y, struct('N',N,'alpha',alpha,'t',t));
 
@@ -49,16 +49,18 @@ end
 
 figure
 hold on
-surf(MU, LAMBDA, LLzonn_mulambda');
-plot3(mu_0, lambda_0, -zonn_loglikelihood(y, [mu_0, sigma_0], lambda_0, t, alpha, N));
-xlabel('Mu');
-ylabel('Lambda');
+surf(LAMBDA, N_RANGE, LLzonn_lambdaN');
+plot3(lambda_0, N_0, -zonn_loglikelihood(y, [mu_0, sigma_0], lambda_0, t, alpha, N_0));
+xlabel('Lambda');
+ylabel('N');
+title('zonn')
 
 figure
 hold on
-surf(MU, LAMBDA, LLGP_mulambda');
-plot3(mu_0, lambda_0, -GPLL(struct('mu',mu_0,'sigma',sigma_0,'lambda',lambda_0), y, struct('N',N,'alpha',alpha,'t',t)));
-xlabel('Mu');
-ylabel('Lambda');
+surf(LAMBDA, N_RANGE, LLGP_lambdaN');
+plot3(lambda_0, N_0, -GPLL(struct('mu',mu_0,'sigma',sigma_0,'lambda',lambda_0), y, struct('N',N_0,'alpha',alpha,'t',t)));
+xlabel('Lambda');
+ylabel('N');
+title('GP')
 
 hold off
