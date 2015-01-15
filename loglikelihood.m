@@ -1,10 +1,10 @@
 function [ LL ] = loglikelihood (state, y, params)
 
+% faster version
 LL = gammaln(params.N+1) + sum(alogb(state.q(:), state.p(:))) - sum(gammaln(state.q(:)+1)) + sum(dbinom(y, state.n, params.alpha, true));
 
-% if isinf(LL) && LL < 0
-%     LL = -10^10;
-% end
+% slower version
+% LL = gammaln(params.N+1) + sum(alogb(state.q(:), state.p(:))) - sum(gammaln(state.q(:)+1)) + sum(logbinopdf(y, state.n, params.alpha));
 
 end
 

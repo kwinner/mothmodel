@@ -1,78 +1,115 @@
 % FIXED PARAMS
-% N      = 100;
-% mu     = 8;
-% sigma  = 4;
-% lambda = 3;
-% alpha  = .5;
-% t      = 1:20;
-
-% gross
-N      = 73;
-mu     = 9.5;
-sigma  = 2.8;
-lambda = 1.488;
-alpha  = .27;
+Ns      = [10,100,1000,10000,100000];
+% Ns      = [1000,10000];
+mu     = 8;
+sigma  = 4;
+lambda = 3;
+alpha  = .5;
 t      = 1:20;
 
+% gross
+% N      = 73;
+% mu     = 9.5;
+% sigma  = 2.8;
+% lambda = 1.488;
+% alpha  = .27;
+% t      = 1:20;
 
-params = struct('N', N, 'alpha', alpha, 't', t);
+
+params = struct('N', nan, 'alpha', alpha, 't', t);
 theta = struct('mu', mu, 'sigma', sigma, 'lambda', lambda);
 
-ALL_MOVES  = {'pairwise','shuffle','mergesplit'};
-moves      = {1,[1,2],[1,3],[1,2,3],[2,3]};
+moves  = {'pairwise','shuffle','mergesplit'};
 
 nRepeats = 10;
 
-nExperiments = numel(moves);
+nExperiments = numel(Ns);
 
-mcmc_nIter = 5000;
+mcmc_nIter = 1000;
 
-use_ARS = false;
+use_ARSs = [0, 1];
 
-%% EXPERIMENT
+% EXPERIMENT
 
-LL = zeros(nRepeats,nExperiments,mcmc_nIter);
-runtime = zeros(nRepeats,nExperiments);
-
-for iRepeat = 1:nRepeats    
-    %% DATA GENERATION
-    % note, this is independent of move choices, so held fixed for all experiments
+LL = zeros(nRepeats,nExperiments,mcmc_nIter,length(use_ARSs));
+runtime = zeros(nRepeats,nExperiments,length(use_ARSs));
+num_successes = zeros(nRepeats,nExperiments,length(use_ARSs));
+calc_times = zeros(nRepeats,nExperiments,length(use_ARSs));
+for u = 1:length(use_ARSs)
     
-    %generate the observations
-    y = sampleState(theta, params);
+    use_ARS = use_ARSs(u);
     
-    %generate the naive start state
-    state_0 = naiveStateExplanation(y,N);
-    state_0.p = ppdf(theta, params);
-    
-    %% MCMC
-    for iExperiment = 1:nExperiments
-        %run MCMC for a bit
-        tic
-        state = mcmc(y,state_0,params,'iterations',mcmc_nIter,'moves',ALL_MOVES(moves{iExperiment}),'use_ARS',use_ARS);
-
-        LL(iRepeat,iExperiment,:) = LL(iRepeat,iExperiment,:) + shiftdim(arrayfun(@(s) loglikelihood(s, y, params), state),-1);
-     
-        runtime(iRepeat,iExperiment) = toc;
+    for iRepeat = 1:nRepeats
         
-        format
-        fprintf('Experiment %i, repeat %i: moves {%s}, mcmc time is %.4f sec\n', iExperiment, iRepeat, strjoin(ALL_MOVES(moves{iExperiment}),','), runtime(iRepeat,iExperiment));
+        % MCMC
+        for iExperiment = 1:nExperiments
+            
+            params.N = Ns(iExperiment);
+            
+            % DATA GENERATION
+            %generate the observations
+            y = sampleState(theta, params);
+            
+            %generate the naive start state
+            state_0 = naiveStateExplanation(y,Ns(iExperiment));
+            state_0.p = ppdf(theta, params);
+            
+            %run MCMC for a bit
+            t = cputime;
+            [state, num_success, calc_time] = mcmc(y,state_0,params,'iterations',mcmc_nIter,'moves',moves,'use_ARS',logical(use_ARS));
+            
+            LL(iRepeat,iExperiment,:,u) = LL(iRepeat,iExperiment,:,u) + shiftdim(arrayfun(@(s) loglikelihood(s, y, params), state),-1);
+            
+            time = cputime - t;
+            runtime(iRepeat,iExperiment,u) = time;
+            
+            num_successes(iRepeat,iExperiment,u) = num_success;
+            
+            calc_time(isnan(calc_time)) = [];
+            calc_times(iRepeat,iExperiment,u) = mean(calc_time);
+            
+%             save(sprintf('experiments/results/ARS-%d_N-%d_%d-%d',use_ARS,N(iExperiment),iRepeat,iExperiment),'LL','runtime')
+            
+            fprintf('Experiment %i, repeat %i: N {%d}, use_ARS: %d, mcmc time is %.4f sec\n', iExperiment, iRepeat, Ns(iExperiment), use_ARS, runtime(iRepeat,iExperiment,u));
+        end
     end
 end
 
 % calculate average and cumavg
-runtime_avg = squeeze(mean(runtime,1));
-LL_avg = squeeze(mean(LL,1));
-NLL_avg_cumavg = -1*cumsum(LL_avg,2)./repmat(1:mcmc_nIter,nExperiments,1);
+calc_times_avg = squeeze(mean(calc_times,1));
+numsuccesses_avg = squeeze(mean(num_successes,1));
+runtime_avg = (mean(runtime,1));
+runtime_error = 1.96/sqrt(nRepeats)*squeeze(std(runtime,1));
 
-% plot
-figure; hold on
-legendNames = cell(1,nExperiments);
-for iExperiment = 1:nExperiments
-    plot(NLL_avg_cumavg(iExperiment,:));
-    legendNames{iExperiment} = strjoin(ALL_MOVES(moves{iExperiment}),',');
-end
-legend(legendNames{:})
-xlabel('Iteration')
-ylabel('Cumulative Mean NLL')
-title(sprintf('Effect of move pool on burn in time, alpha = %d',alpha))
+figure
+loglog(Ns,runtime_avg(:,1),'bo-','MarkerFaceColor','b')
+hold on
+loglog(Ns,runtime_avg(:,2),'rd-','MarkerFaceColor','r')
+legend('non-ARS','ARS')
+xlabel('N')
+ylabel('seconds')
+title('Runtime of ARS and non-ARS vs. N')
+
+
+% errorbar(Ns,runtime_avg(:,1),runtime_error(:,1),'bo-','MarkerFaceColor','b'); 
+% errorbar(Ns,runtime_avg(:,2),runtime_error(:,2),'ro-','MarkerFaceColor','r'); 
+% errorbar(log10(Ns),log10(runtime_avg(:,1)),log10(runtime_error(:,1)),'bo-','MarkerFaceColor','b'); 
+% errorbar(log10(Ns),log10(runtime_avg(:,2)),log10(runtime_error(:,2)),'rd-','MarkerFaceColor','r');
+% errorbar(log10(Ns),(runtime_avg(:,1)),(runtime_error(:,1)),'bo-','MarkerFaceColor','b'); 
+% errorbar(log10(Ns),(runtime_avg(:,2)),(runtime_error(:,2)),'rd-','MarkerFaceColor','r');
+
+
+% LL_avg = squeeze(mean(LL,1));
+% NLL_avg_cumavg = -1*cumsum(LL_avg,2)./repmat(1:mcmc_nIter,nExperiments,1);
+
+% % plot
+% figure; hold on
+% legendNames = cell(1,nExperiments);
+% for iExperiment = 1:nExperiments
+%     plot(NLL_avg_cumavg(iExperiment,:)/N(iExperiment));
+%     legendNames{iExperiment} = sprintf('N = %d',N(iExperiment));
+% end
+% legend(legendNames{:})
+% xlabel('Iteration')
+% ylabel('Cumulative Mean NLL / N')
+% title(sprintf('Effect of N on burn in time, ARS = %d, alpha = %d',use_ARS,alpha))

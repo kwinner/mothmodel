@@ -1,6 +1,6 @@
-function [theta, state, runtime] = stochupEM(y, params, theta_0, varargin)
+function [theta, theta_hessian, state, runtime] = stochupEM(y, params, theta_0, varargin)
 
-DEFAULT_EM_ITERATIONS   = 200;           %how many iterations to run EM
+DEFAULT_EM_ITERATIONS   = 1;%200;           %how many iterations to run EM
 DEFAULT_MIXING_PARAM    = .2;            %what percent of Q from E step to add to the running Q
 DEFAULT_INITIAL_MCMC_ITERATIONS = 50000; %how many iterations to run for the first iteration of MCMC
 DEFAULT_MCMC_ITERATIONS = 100;           %how many iterations to run MCMC for during E step
@@ -26,6 +26,7 @@ addParamValue(parser, 'gradients',               DEFAULT_GRADIENTS);
 addParamValue(parser, 'theta_lb',                DEFAULT_THETA_LB);
 addParamValue(parser, 'theta_ub',                DEFAULT_THETA_UB);
 addParamValue(parser, 'oracle',                  false);
+addParamValue(parser, 'use_ARS',                 false);
 
 parser.parse(y, params, theta_0, varargin{:});
 y                       = parser.Results.y;
@@ -42,6 +43,7 @@ gradients               = parser.Results.gradients;
 theta_lb                = parser.Results.theta_lb;
 theta_ub                = parser.Results.theta_ub;
 oracle                  = parser.Results.oracle;
+use_ARS                 = parser.Results.use_ARS;
 
 %we do /need/ an initial state, but we can use the naive one if one is not provided
 if isempty(state_0)
@@ -59,7 +61,9 @@ else
 end
 
 %initialize theta and state, the two arrays that track the progress of the EM
-theta = theta_0;
+theta(EM_iterations) = theta_0;
+theta(1) = theta_0;
+state{EM_iterations} = state_0;
 state{1} = state_0;
 runtime = 0;
 qhat = state_0.q;
@@ -73,12 +77,13 @@ for iter = 2:EM_iterations+1
 	if oracle
 		%oracle means state_0 should have been the true state, don't need any more E step
 		state{iter} = state{iter-1};
-	else
+    else
+        num_iters = MCMC_iterations;
 		if iter == 2 %'first' iteration
-			state{iter} = mcmc(y, state{iter-1}(end), params, 'iterations', initial_MCMC_iterations);	
-		else
-			state{iter} = mcmc(y, state{iter-1}(end), params, 'iterations', MCMC_iterations);
-		end
+			num_iters = initial_MCMC_iterations;
+        end
+        
+        state{iter} = mcmc(y, state{iter-1}(end), params, 'iterations', num_iters,'use_ARS',use_ARS);	
 	end
 
 	%% -processing-
@@ -103,7 +108,7 @@ for iter = 2:EM_iterations+1
 	problem.ub        = theta_ub;
 	problem.solver    = 'fmincon';
 	problem.options   = options;
-	thetaArray         = fmincon(problem);
+    [thetaArray,~,~,~,~,~,theta_hessian] = fmincon(problem);
 	theta(iter).mu     = thetaArray(1);
 	theta(iter).sigma  = thetaArray(2);
 	theta(iter).lambda = thetaArray(3);
