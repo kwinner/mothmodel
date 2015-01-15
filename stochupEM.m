@@ -1,6 +1,6 @@
 function [theta, theta_hessian, state, runtime] = stochupEM(y, params, theta_0, varargin)
 
-DEFAULT_EM_ITERATIONS   = 1;%200;           %how many iterations to run EM
+DEFAULT_EM_ITERATIONS   = 200;           %how many iterations to run EM
 DEFAULT_MIXING_PARAM    = .2;            %what percent of Q from E step to add to the running Q
 DEFAULT_INITIAL_MCMC_ITERATIONS = 50000; %how many iterations to run for the first iteration of MCMC
 DEFAULT_MCMC_ITERATIONS = 100;           %how many iterations to run MCMC for during E step

@@ -32,12 +32,14 @@ parfor iter = 1:num_iters
     thetas(iter) = theta;
     theta_hessians{iter} = theta_hessian;
     states{iter} = state;
-    runtimes{iter} = runtimes;
+    runtimes{iter} = runtime;
  
 end
 
-% theta_cov = inv(theta_hessian);
-% CI_width = abs(2.*sqrt(diag(theta_cov)))';
-% 
-% theta_error = abs(theta_zonn - [mu, sigma, lambda, N]);
-% coverage = coverage + (theta_error <= CI_width);
+save EM_CI_data thetas theta_hessians states runtimes
+
+theta_cov = inv(theta_hessian);
+CI_width = abs(2.*sqrt(diag(theta_cov)))';
+
+theta_error = abs(theta_zonn - [mu, sigma, lambda, N]);
+coverage = coverage + (theta_error <= CI_width);
