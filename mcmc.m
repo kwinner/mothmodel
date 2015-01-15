@@ -1,4 +1,4 @@
-function [ state ] = mcmc( y, state_0, params, varargin )
+function [ state, num_success, calc_times ] = mcmc( y, state_0, params, varargin )
 
 DEFAULT_ITERATIONS = 1000;
 DEFAULT_MOVES      = {'pairwise', 'shuffle', 'mergesplit'};
@@ -17,26 +17,20 @@ use_ARS     = parser.Results.use_ARS;
 %initialize
 state(nIterations) = state_0;
 state(1) = state_0;
+calc_times = zeros(length(2:nIterations),1);
 
-% iter = 2;
-% while iter <= nIterations + 1
+num_success = 0;
 for iter = 2:nIterations
     %do one sample
-    [state(iter), success] = gibbsSample(y, state(iter-1), params, 'moves', moves, 'use_ARS', use_ARS);
+    [state(iter), success, calc_times(iter-1)] = gibbsSample(y, state(iter-1), params, 'moves', moves, 'use_ARS', use_ARS);
     
-    %if the sample was successful, move on
-    %unsuccessful moves are, for instance, moves which select an illegal pair to xfer
-    %or which have no available slack
-%     if ~success
-%         continue
-%     else
-%         iter = iter + 1;
-%     end
+    num_success = num_success + success;
+    
 end
 
 end
 
-function [ state, success ] = gibbsSample( y, state_0, params, varargin )
+function [ state, success, calc_time ] = gibbsSample( y, state_0, params, varargin )
 
 DEFAULT_MOVES = {'pairwise', 'shuffle', 'mergesplit'};
 DEFAULT_USE_ARS    = false;
@@ -55,6 +49,7 @@ NQ = (T+1)*(T+2)/2; %size of upper triangular part of Q (# of valid outcomes)
 %select a move (uniformly at random)
 move = moves{randi(numel(moves))};
 
+calc_time = nan;
 switch move
     case 'pairwise'
         %select two cells in q to rebalance
@@ -167,14 +162,22 @@ end
 %our log-likelhood function
 logp = @(delta) loglikelihoodofdelta(delta, state_0, y, params, move);
 
-if use_ARS
+if min(deltaRange) == max(deltaRange)
+    sampled_delta = min(deltaRange);
+    
+    calc_time = nan;
+    
+elseif use_ARS
     
     bounds = [min(deltaRange),max(deltaRange)];
     points = [];
     nsamples = 1;
     
+    tic
     sampled_delta = discrete_ars(logp, bounds, points, nsamples);
+    calc_time = toc;
 else
+    tic
     %compute the LL over all possible delta
     UNLL = arrayfun(@(delta) logp(delta), deltaRange);
     
@@ -185,13 +188,15 @@ else
     NLL = normalizeLikelihood(UNLL);
     
     if any(NLL < 0) || all(NLL == 0)
+        calc_time = toc;
         success = false;
         state = state_0;
         return
     end
 
-    %randomly sample delta
+    %randomly sample delta    
     sampled_delta = deltaRange(randsample(numel(deltaRange), 1, true, NLL));
+    calc_time = toc;
 end
 
 state = move.applydelta(sampled_delta, state_0, move);
