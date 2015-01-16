@@ -19,7 +19,7 @@ parfor iter = 1:100
 	fprintf('\b|\n');
 	y = sampleState(struct('mu',mu,'sigma',sigma,'lambda',lambda), struct('N',N,'t',t,'alpha',alpha));
 	problem = struct;
-	problem.objective = @(theta) -zonn_loglikelihood(y, [theta(1) sigma], lambda, t, alpha, N);
+	problem.objective = @(theta) -zonn_loglikelihood(y, [theta(1) sigma], theta(2), t, alpha, N);
 	% problem.x0 = [mu, sigma, lambda, N];
 	problem.x0 = [mu lambda];
 	problem.lb = [-5, 1e-6];

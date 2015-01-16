@@ -22,10 +22,4 @@ for i = 1:T
 	end
 end
 
-[R,p] = chol(obsCov);
-if p ~= 0
-	disp world
-	keyboard
-end
-
 end
