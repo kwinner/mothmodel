@@ -1,5 +1,5 @@
 % function [theta, CI] = MLE_theta( y, T, learningmask, mu, sigma, lambda, N, alpha, varargin )
-function [theta, CI] = MLE_theta( y, T, varargin);
+function [theta_hat, CI] = MLE_theta( y, T, varargin );
 
 %start timing
 tic
@@ -12,7 +12,7 @@ DEFAULT_THETA_UB      = [ max(T)+var(T), var(T),  max(T)-min(T), 100*sum(y),  1 
 DEFAULT_THETA_0       = [    mean(T),    var(T),     var(T),       sum(y),   0.5 ];
 
 DEFAULT_OPTIM_ALG = 'interior-point';
-DEFAULT_DISPLAY   = true;
+DEFAULT_DISPLAY   = false;
 
 parser = inputParser;
 
