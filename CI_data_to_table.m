@@ -80,9 +80,9 @@ for f = 1:length(files)
         to_print{f+2,i} = params.(param_strs{p});
         i = i + 1;
     end
-    for o = 1:length(mean_strs)
-        for s = 1:length(alg_strs)
-            for t = 1:length(target_strs)
+    for t = 1:length(target_strs)
+        for o = 1:length(mean_strs)
+            for s = 1:length(alg_strs)            
                 to_print{f+2,i} = means(s,o,t);
                 i = i + 1;
             end
