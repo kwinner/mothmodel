@@ -27,7 +27,7 @@ nExperiments = numel(moves);
 
 mcmc_nIter = 5000;
 
-use_ARS = false;
+use_ARS = true;
 
 %% EXPERIMENT
 

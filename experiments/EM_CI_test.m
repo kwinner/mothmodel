@@ -38,7 +38,7 @@ end
 
 save EM_CI_data thetas theta_hessians states runtimes
 
-theta_cov = inv(theta_hessian);
+theta_cov = inv(theta_hessians{end});
 CI_width = abs(2.*sqrt(diag(theta_cov)))';
 
 theta_error = abs(theta_zonn - [mu, sigma, lambda, N]);
