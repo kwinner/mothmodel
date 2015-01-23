@@ -19,7 +19,7 @@ warning('off', 'MATLAB:nearlySingularMatrix');
 T = T_min:T_freq:T_max;
 
 if exist('out_filename','var')
-	out_file = fopen(out_filename);
+	out_file = fopen(fullfile(pwd, [out_filename, '.out']), 'w');
 else
 	%file id 1 is standard out (so intuitive!)
 	out_file = 1;
@@ -63,29 +63,29 @@ for iter = 1:niters
 
 	if verbose
 		format long g
-		fprintf(out_file, 'iteration %d:\n', iter)
-		fprintf(out_file, 'theta = [%.2f, %.2f, %.2f, %.1f]\n', mu, sigma, lambda, N)
-		fprintf(out_file, 'y = %s\n', mat2str(y(iter,:)))
+		fprintf(out_file, 'iteration %d:\n', iter);
+		fprintf(out_file, 'theta = [%.2f, %.2f, %.2f, %.1f]\n', mu, sigma, lambda, N);
+		fprintf(out_file, 'y = %s\n', mat2str(y(iter,:)));
 
-		fprintf(out_file, 'zonneveld:\n')
+		fprintf(out_file, 'zonneveld:\n');
 		fprintf(out_file, 'theta_zonn = [%.2f %c %.2f, %.2f %c %.2f, %.2f %c %.2f, %.1f %c %.1f]\n', theta_zonn(iter,1), 177, CI_width_zonn(iter,1), ...
 		                                                                                             theta_zonn(iter,2), 177, CI_width_zonn(iter,2), ...
 		                                                                                             theta_zonn(iter,3), 177, CI_width_zonn(iter,3), ...
-		                                                                                             theta_zonn(iter,4), 177, CI_width_zonn(iter,4))
-		fprintf(out_file, 'coverage_zonn = [%d %d %d %d]\n', coverage_zonn(iter,1), coverage_zonn(iter,2), coverage_zonn(iter,3), coverage_zonn(iter,4))
-		fprintf(out_file, 'error_zonn = [%.2f, %.2f, %.2f, %.1f]\n', error_zonn(iter,1), error_zonn(iter,2), error_zonn(iter,3), error_zonn(iter,4))
-		fprintf(out_file, 'runtime_zonn = %.2fs\n', runtime_zonn(iter))
+		                                                                                             theta_zonn(iter,4), 177, CI_width_zonn(iter,4));
+		fprintf(out_file, 'coverage_zonn = [%d %d %d %d]\n', coverage_zonn(iter,1), coverage_zonn(iter,2), coverage_zonn(iter,3), coverage_zonn(iter,4));
+		fprintf(out_file, 'error_zonn = [%.2f, %.2f, %.2f, %.1f]\n', error_zonn(iter,1), error_zonn(iter,2), error_zonn(iter,3), error_zonn(iter,4));
+		fprintf(out_file, 'runtime_zonn = %.2fs\n', runtime_zonn(iter));
 
-		fprintf(out_file, 'gaussian:\n')
+		fprintf(out_file, 'gaussian:\n');
 		fprintf(out_file, 'theta_gaussian = [%.2f %c %.2f, %.2f %c %.2f, %.2f %c %.2f, %.1f %c %.1f]\n', theta_gaussian(iter,1), 177, CI_width_gaussian(iter,1), ...
 		                                                                                                 theta_gaussian(iter,2), 177, CI_width_gaussian(iter,2), ...
 		                                                                                                 theta_gaussian(iter,3), 177, CI_width_gaussian(iter,3), ...
-		                                                                                                 theta_gaussian(iter,4), 177, CI_width_gaussian(iter,3))
-		fprintf(out_file, 'coverage_gaussian = [%d %d %d %d]\n', coverage_gaussian(iter,1), coverage_gaussian(iter,2), coverage_gaussian(iter,3), coverage_gaussian(iter,4))
-		fprintf(out_file, 'error_gaussian = [%.2f, %.2f, %.2f, %.1f]\n', error_gaussian(iter,1), error_gaussian(iter,2), error_gaussian(iter,3), error_gaussian(iter,4))
-		fprintf(out_file, 'runtime_gaussian = %.2fs\n', runtime_gaussian(iter))
+		                                                                                                 theta_gaussian(iter,4), 177, CI_width_gaussian(iter,3));
+		fprintf(out_file, 'coverage_gaussian = [%d %d %d %d]\n', coverage_gaussian(iter,1), coverage_gaussian(iter,2), coverage_gaussian(iter,3), coverage_gaussian(iter,4));
+		fprintf(out_file, 'error_gaussian = [%.2f, %.2f, %.2f, %.1f]\n', error_gaussian(iter,1), error_gaussian(iter,2), error_gaussian(iter,3), error_gaussian(iter,4));
+		fprintf(out_file, 'runtime_gaussian = %.2fs\n', runtime_gaussian(iter));
 
-		fprintf(out_file, '\n\n')
+		fprintf(out_file, '\n\n');
 	end
 end
 
@@ -103,19 +103,35 @@ mean_coverage_gaussian = mean(coverage_gaussian, 1);
 mean_runtime_gaussian  = mean(runtime_gaussian, 1);
 
 %print results
-fprintf(out_file, 'zonneveld:\n')
-fprintf(out_file, 'mean_theta_zonn = [%.2f, %.2f, %.2f, %.1f]\n', mean_theta_zonn(1), mean_theta_zonn(2), mean_theta_zonn(3), mean_theta_zonn(4))
-fprintf(out_file, 'mean_CI_width_zonn = [%.2f, %.2f, %.2f, %.1f]\n', mean_CI_width_zonn(1), mean_CI_width_zonn(2), mean_CI_width_zonn(3), mean_CI_width_zonn(4))
-fprintf(out_file, 'mean_error_zonn = [%.2f, %.2f, %.2f, %.1f]\n', mean_error_zonn(1), mean_error_zonn(2), mean_error_zonn(3), mean_error_zonn(4))
-fprintf(out_file, 'mean_coverage_zonn = [%.2f, %.2f, %.2f, %.2f]\n', mean_coverage_zonn(1), mean_coverage_zonn(2), mean_coverage_zonn(3), mean_coverage_zonn(4))
-fprintf(out_file, 'mean_runtime_zonn = %.2fs\n', mean_runtime_zonn)
-fprintf(out_file, '\n')
-fprintf(out_file, 'gaussian:\n')
-fprintf(out_file, 'mean_theta_gaussian = [%.2f, %.2f, %.2f, %.1f]\n', mean_theta_gaussian(1), mean_theta_gaussian(2), mean_theta_gaussian(3), mean_theta_gaussian(4))
-fprintf(out_file, 'mean_CI_width_gaussian = [%.2f, %.2f, %.2f, %.1f]\n', mean_CI_width_gaussian(1), mean_CI_width_gaussian(2), mean_CI_width_gaussian(3), mean_CI_width_gaussian(4))
-fprintf(out_file, 'mean_error_gaussian = [%.2f, %.2f, %.2f, %.1f]\n', mean_error_gaussian(1), mean_error_gaussian(2), mean_error_gaussian(3), mean_error_gaussian(4))
-fprintf(out_file, 'mean_coverage_gaussian = [%.2f, %.2f, %.2f, %.2f]\n', mean_coverage_gaussian(1), mean_coverage_gaussian(2), mean_coverage_gaussian(3), mean_coverage_gaussian(4))
-fprintf(out_file, 'mean_runtime_gaussian = %.2fs\n', mean_runtime_gaussian)
+fprintf(out_file, 'params:\n');
+fprintf(out_file, 'mu: %.2f\n', mu);
+fprintf(out_file, 'sigma: %.2f\n', sigma);
+fprintf(out_file, 'lambda: %.2f\n', lambda);
+fprintf(out_file, 'T: %s\n', mat2str(T));
+fprintf(out_file, 'alpha: %.2f\n', alpha);
+fprintf(out_file, 'N: %d\n', N);
+fprintf(out_file, 'niters: %d\n', niters);
+fprintf(out_file, '\n');
+fprintf(out_file, 'zonneveld:\n');
+fprintf(out_file, 'mean_theta_zonn = [%.2f, %.2f, %.2f, %.1f]\n', mean_theta_zonn(1), mean_theta_zonn(2), mean_theta_zonn(3), mean_theta_zonn(4));
+fprintf(out_file, 'mean_CI_width_zonn = [%.2f, %.2f, %.2f, %.1f]\n', mean_CI_width_zonn(1), mean_CI_width_zonn(2), mean_CI_width_zonn(3), mean_CI_width_zonn(4));
+fprintf(out_file, 'mean_error_zonn = [%.2f, %.2f, %.2f, %.1f]\n', mean_error_zonn(1), mean_error_zonn(2), mean_error_zonn(3), mean_error_zonn(4));
+fprintf(out_file, 'mean_coverage_zonn = [%.2f, %.2f, %.2f, %.2f]\n', mean_coverage_zonn(1), mean_coverage_zonn(2), mean_coverage_zonn(3), mean_coverage_zonn(4));
+fprintf(out_file, 'mean_runtime_zonn = %.2fs\n', mean_runtime_zonn);
+fprintf(out_file, '\n');
+fprintf(out_file, 'gaussian:\n');
+fprintf(out_file, 'mean_theta_gaussian = [%.2f, %.2f, %.2f, %.1f]\n', mean_theta_gaussian(1), mean_theta_gaussian(2), mean_theta_gaussian(3), mean_theta_gaussian(4));
+fprintf(out_file, 'mean_CI_width_gaussian = [%.2f, %.2f, %.2f, %.1f]\n', mean_CI_width_gaussian(1), mean_CI_width_gaussian(2), mean_CI_width_gaussian(3), mean_CI_width_gaussian(4));
+fprintf(out_file, 'mean_error_gaussian = [%.2f, %.2f, %.2f, %.1f]\n', mean_error_gaussian(1), mean_error_gaussian(2), mean_error_gaussian(3), mean_error_gaussian(4));
+fprintf(out_file, 'mean_coverage_gaussian = [%.2f, %.2f, %.2f, %.2f]\n', mean_coverage_gaussian(1), mean_coverage_gaussian(2), mean_coverage_gaussian(3), mean_coverage_gaussian(4));
+fprintf(out_file, 'mean_runtime_gaussian = %.2fs\n', mean_runtime_gaussian);
+
+fclose(out_file);
+
+if exist('out_filename', 'var')
+	%save the .mat file too
+	save([out_filename, '.mat'], 'theta_zonn', 'CI_width_zonn', 'error_zonn', 'coverage_zonn', 'runtime_zonn', 'theta_gaussian', 'CI_width_gaussian', 'runtime_gaussian', 'coverage_gaussian', 'error_gaussian', 'T_min', 'T_max', 'T_freq', 'mu', 'sigma', 'lambda', 'N', 'alpha', 'niters');
+end
 
 warning(SING_WARNING_STATE.state, 'MATLAB:nearlySingularMatrix');
 
