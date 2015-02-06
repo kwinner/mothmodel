@@ -1,0 +1,144 @@
+function latent_variable_experiment()
+
+no_plot = true;
+
+%parameters learned for population A1 in the Gross et al paper
+mu     = 10.5;
+sigma  = 2.8;
+lambda = 7.0;
+alpha  = 1.0;
+N      = 30; %50, 100, 200
+t      = 0:5:50;
+params = struct('N', N, 'alpha', alpha, 't', t);
+theta = struct('mu', mu, 'sigma', sigma, 'lambda', lambda);
+
+moves  = {'pairwise','shuffle','mergesplit'};
+burnin_iters = 1000;
+sample_step_iters = 500;
+mcmc_nIter = 100000 + burnin_iters;
+num_samples = (mcmc_nIter - burnin_iters)/sample_step_iters;
+fprintf('%d total samples\n',num_samples)
+use_ARS = false;
+
+%whether to draw samples from prior or posterior
+prior = false;
+
+postfix = '_posterior';
+if prior
+    postfix = '_prior';
+end
+
+if ~no_plot
+    figure; hold;
+end
+
+
+% get q
+[y, state_0] = sampleState(theta,params);
+
+if prior == true
+    q = state_0.q;
+else
+    state = mcmc(y,state_0,params,'iterations',mcmc_nIter,'moves',moves,'use_ARS',logical(use_ARS));
+end
+
+cum_vals_vec = zeros(num_samples,2*N);
+times_vec = zeros(num_samples,2*N);
+y_vec = zeros(num_samples,length(t));
+iters_to_sample = burnin_iters+1 : sample_step_iters : mcmc_nIter;
+for n = 1:length(iters_to_sample)
+    
+    %draw life/death times from the q at this sample
+    draws = sample_from_q(state(iters_to_sample(n)).q,params,theta);
+    
+    %set up observed curve
+    vals = [ones(N,1); -1*ones(N,1)];
+    times = [draws(:,1); draws(:,2)];
+    [times,inds] = sort(times);
+    vals = vals(inds);
+    cum_vals = cumsum(vals);
+    
+    cum_vals_vec(n,:) = cum_vals;
+    times_vec(n,:) = times;
+    y_vec(n,:) = y;
+    
+    if ~no_plot
+        stairs(times,cum_vals)
+    end
+end
+
+%get zonn pdf
+theta_hat = MLE_theta(y, t, 'learningmask',[1,1,1,0,0],'N',N,'alpha',1)
+
+mu_hat = theta_hat(1);
+sigma_hat = theta_hat(2);
+lambda_hat = theta_hat(3);
+ks = floor(min(t)):ceil(max(t));
+ps_zonn = zeros(size(ks));
+for k_ind = 1:length(ks)
+    k = ks(k_ind);
+    %     func = @(s) 1/(sigma*sqrt(2*pi))*exp(-(s-mu).^2/(2*sigma^2)).*(1 - exp(-1/lambda*(k-s)));
+    func = @(s) normpdf(s,mu_hat,sigma_hat).*expcdf(k-s,lambda_hat,'upper');
+    ps_zonn(k_ind) = integral(func, -inf, k);
+end
+
+%actual pdf
+ks = floor(min(t)):ceil(max(t));
+ps = zeros(size(ks));
+for k_ind = 1:length(ks)
+    k = ks(k_ind);
+    %     func = @(s) 1/(sigma*sqrt(2*pi))*exp(-(s-mu).^2/(2*sigma^2)).*(1 - exp(-1/lambda*(k-s)));
+    func = @(s) normpdf(s,mu,sigma).*expcdf(k-s,lambda,'upper');
+    ps(k_ind) = integral(func, -inf, k);
+end
+
+if ~no_plot
+    plot(ks,ps_zonn*N,'r-','linewidth',4);
+    plot(t,y,'ko')
+    title(sprintf('N = %d',N))    
+end
+
+csvwrite([fileparts(which(mfilename)) '/latent_variable_cum_vals',postfix,'.csv'],cum_vals_vec)
+csvwrite([fileparts(which(mfilename)) '/latent_variable_times',postfix,'.csv'],times_vec)
+csvwrite([fileparts(which(mfilename)) '/latent_variable_ys',postfix,'.csv'],y_vec)
+csvwrite([fileparts(which(mfilename)) '/latent_variable_mean_ps_zonn_ks',postfix,'.csv'],[ps_zonn;ks])
+csvwrite([fileparts(which(mfilename)) '/latent_variable_mean_ps_ks',postfix,'.csv'],[ps;ks])
+
+
+
+function draws = sample_from_q(q,params,theta)
+
+t = params.t;
+N = params.N;
+mu = theta.mu;
+sigma = theta.sigma;
+lambda = theta.lambda;
+
+% how many of each q bin we've filled so far
+counts = zeros(size(q));
+
+% list of birth and death times
+draws = zeros(N,2); % [birth time, death time]
+draw_ind = 1;
+
+while ~all(all(counts == q)) % until we've filled up counts to match q
+    
+    % sample birth and death time
+    birth = normrnd(mu,sigma);
+    death = birth + exprnd(lambda);
+    
+    %determine birth and death intervals
+    birth_interval = length(find(t-birth<0))+1;
+    death_interval = length(find(t-death<0))+1;
+    
+    %increment count if its not full
+    if counts(birth_interval,death_interval) < q(birth_interval,death_interval)
+        
+        counts(birth_interval,death_interval) = counts(birth_interval,death_interval) + 1;
+        
+        %add to draws
+        draws(draw_ind,:) = [birth,death];
+        draw_ind = draw_ind + 1;
+    end
+    
+end
