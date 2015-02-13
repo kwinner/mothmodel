@@ -1,5 +1,5 @@
 function [ x, y ] = ind2sub_triu( M, i )
-%IND2SUB_TRIU similar to ind2sub but for linear indices into the upper triangular part of a square matrix
+%IND2SUB_TRIU similar to ind2sub but for linear indices into the upper triangular part of a matrix
 %   M - side length of the (square) matrix
 %   i - the index(-ices) into an upper tri. matrix of size M x M
 
