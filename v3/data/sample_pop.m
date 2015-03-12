@@ -12,7 +12,7 @@ function [S, Z] = sample_pop( arrivalDistn, arrivalParams, serviceDistn, service
 %
 % for additional details about the distribution object format, see README.txt
 
-if ~exist(N, 'var')
+if ~exist('N', 'var')
 	N = 1;
 end
 
