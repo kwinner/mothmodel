@@ -1,6 +1,6 @@
-function y = sample_obs( T, S, Z )
+function y = sample_obs( obsDistn, obsParams, T, n )
 
-D = S + Z
+
 
 end
 
