@@ -1,6 +1,6 @@
 % FIXED PARAMS
-Ns      = [10,100,1000,10000,100000];
-% Ns      = [1000,10000];
+Ns      = [10,50,100,500,1000,2500, 5000, 7500, 10000, 15000, 25000, 50000, 75000, 100000];
+% Ns      = [10,100,1000];
 mu     = 8;
 sigma  = 4;
 lambda = 3;
@@ -19,7 +19,7 @@ t      = 1:20;
 params = struct('N', nan, 'alpha', alpha, 't', t);
 theta = struct('mu', mu, 'sigma', sigma, 'lambda', lambda);
 
-moves  = {'pairwise','shuffle','mergesplit'};
+moves  = {'pair','shuffle','mergesplit'};
 
 nRepeats = 10;
 
@@ -86,7 +86,16 @@ loglog(Ns,runtime_avg(:,1),'bo-','MarkerFaceColor','b')
 hold on
 loglog(Ns,runtime_avg(:,2),'rd-','MarkerFaceColor','r')
 legend('non-ARS','ARS')
-xlabel('N')
+xlabel('log(N)')
+ylabel('log(seconds)')
+title('Runtime of ARS and non-ARS vs. N')
+
+figure
+semilogx(Ns,runtime_avg(:,1),'bo-','MarkerFaceColor','b')
+hold on
+semilogx(Ns,runtime_avg(:,2),'rd-','MarkerFaceColor','r')
+legend('non-ARS','ARS')
+xlabel('log(N)')
 ylabel('seconds')
 title('Runtime of ARS and non-ARS vs. N')
 
