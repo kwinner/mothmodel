@@ -1,7 +1,7 @@
 function NLL_avg_cumavg = movepool_experiment( mu, sigma, lambda, N, alpha, T, varargin )
 
-DEFAULT_MCMC_ITERATIONS = 1500;
-DEFAULT_REPEATS         = 10;
+DEFAULT_MCMC_ITERATIONS = 2500;
+DEFAULT_REPEATS         = 5;
 DEFAULT_USE_ARS         = false;
 
 parser = inputParser;
@@ -16,10 +16,10 @@ useARS          = parser.Results.useARS;
 
 %setup movepools: the sets of moves to experiment over
 ALL_MOVES = {'pair', 'shuffle', 'cycle', 'mergesplit'};
-% movepools = {1, 3, [1,3], [2,3], [2,4], [1,4]};
+movepools = {2, 3, [2,3], [2,4]};
 % movepools = {1,[1,2],[1,4],[1,2,4],[2,4]};
-movepools = {1,3,[1,3],[1,4]};
-lines = {'b-','g--','r:','c-.'};
+% movepools = {1,3,[1,3],[1,4]};
+lines = {'b-','g-','r-','c-.','y-','m-'};
 
 nExperiments = numel(movepools);
 

@@ -95,17 +95,19 @@ ylim(Y_LIM);
 xlabel(XLABEL, 'FontSize', LABEL_SIZE)
 ylabel(YLABEL, 'FontSize', LABEL_SIZE);
 
+return
+
 %configure the title
-titlehandle = title(PLOT_TITLE);
-set(titlehandle, 'FontSize', TITLE_SIZE);
-set(titlehandle, 'Position', get(titlehandle, 'Position') + [0, .3, 0]);
+% titlehandle = title(PLOT_TITLE);
+% set(titlehandle, 'FontSize', TITLE_SIZE);
+% set(titlehandle, 'Position', get(titlehandle, 'Position') + [0, .3, 0]);
 
 %if observation times provided, draw them
 if ~isempty(T)
 	K = numel(T);
 
 	if draw_T
-		plot([T;T], repmat(Y_LIM,K,1)', '--r', 'LineWidth', OBS_TIME_LINE_WIDTH)
+		plot([T;T], repmat(Y_LIM,K,1)', '--', 'LineWidth', OBS_TIME_LINE_WIDTH, 'Color', [.6,.6,.6])
 
 		%replace the ticks with the values in T
 		ax = gca;
@@ -116,30 +118,31 @@ if ~isempty(T)
 		plot(T, y, 'og', 'MarkerSize', OBS_MARKER_SIZE, 'MarkerFaceColor', 'g')
 	end
 
-	if draw_n
-		n = arrayfun(@(t) sum(S{1} <= t & S{1}+Z{1} >= t), T);
+	% if draw_n
+	% 	n = arrayfun(@(t) sum(S{1} <= t & S{1}+Z{1} >= t), T);
 
-		%plot markers for these
-		plot(T, n, 's', 'MarkerSize', ABUNDANCE_MARKER_SIZE)
+	% 	%plot markers for these
+	% 	plot(T, n, 's', 'MarkerSize', ABUNDANCE_MARKER_SIZE)
 
-		%clone the existing axes
-		ax2 = axes('Position', get(ax, 'Position'), 'Color', 'none');
-		set(ax2, 'XAxisLocation', 'top');
-		set(ax2, 'XLim', get(ax, 'XLim'));
+	% 	%clone the existing axes
+	% 	ax = gca;
+	% 	ax2 = axes('Position', get(ax, 'Position'), 'Color', 'none');
+	% 	set(ax2, 'XAxisLocation', 'top');
+	% 	set(ax2, 'XLim', get(ax, 'XLim'));
 
-		%draw n as labels over T
-		set(ax2, 'XTick', T);
-		set(ax2, 'XTickLabel', n);
-		set(ax2, 'YTick', []);
+	% 	%draw n as labels over T
+	% 	set(ax2, 'XTick', T);
+	% 	set(ax2, 'XTickLabel', n);
+	% 	set(ax2, 'YTick', []);
 
-		set(ax2, 'XColor', 'r');
+	% 	set(ax2, 'XColor', [.6,.6,.6]);
 
-		%label it?
-		xlabel(ax2,'Abundance:','color','r')
-		xlabelhandle = get(ax2, 'XLabel');
-		set(xlabelhandle, 'Position', [0, 1.01, 0])
-		set(xlabelhandle, 'horizontalAlignment', 'left')
-	end
+	% 	%label it?
+	% 	% xlabel(ax2,'Abundance:','color','r')
+	% 	% xlabelhandle = get(ax2, 'XLabel');
+	% 	% set(xlabelhandle, 'Position', [0, 1.01, 0])
+	% 	% set(xlabelhandle, 'horizontalAlignment', 'left')
+	% end
 end
 
 end

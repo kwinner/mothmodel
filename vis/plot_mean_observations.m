@@ -1,6 +1,6 @@
 function plot_mean_observation( mu, sigma, lambda, T_plot, N, alpha, varargin )
 
-DEFAULT_MODEL = 'gaussian'; %gaussian, zonn
+DEFAULT_MODEL = 'zonn'; %gaussian, zonn
 
 parser = inputParser;
 addOptional(  parser, 'y',     []);
@@ -24,7 +24,6 @@ T_plot = union(T_plot, T_obs);
 
 pt_plot = presence_probs(mu, sigma, lambda, T_plot);
 
-figure
 hold on
 title(PLOT_TITLE, 'FontSize', TITLE_SIZE)
 xlabel(XLABEL,    'FontSize', LABEL_SIZE)
