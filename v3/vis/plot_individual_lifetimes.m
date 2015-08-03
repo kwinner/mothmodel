@@ -1,6 +1,27 @@
 function plot_individual_lifetimes( S, Z, varargin )
 % PLOT_INDIVIDUAL_LIFETIMES := Draw the lifetimes of every individual stacked above a timeline
-% plot_individual_lifetimes(  )
+% plot_individual_lifetimes( S, Z, ... )
+%        (draw all individuals on a timeline)
+% plot_individual_lifetimes( S, Z, T, ... )
+%        (also draw the times when the population was observed)
+%    S                    = vector [N x 1] of individual birth times
+%    Z                    = vector [N x 1] of individual death times
+%    [T]                  = vector [1 x K] of observation times (sample times)
+%    "colors"             = vector [N x 1] of color indices to draw each individual
+%                           note: the actual colors are generated from distinguishable_colors.m, these are indices
+%    "showAbundance"      = boolean flag whether or not to draw abundance above each observation
+%    "observLineWidth"    = line width for vertical time lines
+%    "observLineColor"    = color of vertical time lines
+%    "abundanceColor"     = color of abundance text
+%    "abundanceLabel"     = text to label abundance numbers
+%    "abundanceLabelSize" = font size of abundance label
+%    "title"              = text to title plot with
+%    "titleSize"          = font size of plot title
+%    "lifetimeLineWidth"  = line width for individual lines
+%    "lifetimeMarkerSize" = marker size of endcaps on lifespan lines
+%    "xlabel"             = text for xlabel
+%    "xlabelSize"         = font size of xlabel
+%    "figureSize"         = size (outerposition) of figure
 
 assert(size(S, 1) == size(Z, 1))
 
@@ -67,7 +88,7 @@ assert(size(colors, 1) == N)
 %stack the individuals (by computing the Y values)
 Y = [(1:N); (1:N)];
 
-figure; hold on
+figure('Size', ); hold on
 ax1 = gca;
 
 %draw each group of individuals with the same color

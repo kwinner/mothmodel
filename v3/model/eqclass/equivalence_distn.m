@@ -1,10 +1,8 @@
-function P = equivalence_distn( arrivalDistn, arrivalParams, serviceDistn, serviceParams, T )
+function P = equivalence_distn( arrivalDistn, serviceDistn, T )
 % EQUIVALENCE_DISTN := Compute P, the multinomial distribution for Q, where P(i,j) = p(born in interval i, die in interval j)
-% P = equivalence_distn( arrivalDistn, arrivalParams, serviceDistn, serviceParams, T )
+% P = equivalence_distn( arrivalDistn, serviceDistn, T )
 %    arrivalDistn  = a distribution object for the birth process (typically normal)
-%    arrivalParams = cell vector of parameters for the arrival distn
 %    serviceDistn  = a distribution object for the death process (typically exponential)
-%    serviceParams = cell vector of parameters for the death distn
 %    T             = vector [1 x K] of observation times (sample times)
 %
 %    P             = probability matrix [K+1 x K+1] for likelihood of each equiv class
@@ -25,9 +23,9 @@ for i = 1:K+1
 	for j = i:K+1
 		%compute the convolution of arrival and lifespan processes for this cell
 		%see section 3 of our ICML paper (Winner et al, 2015) for more details
-		P(i,j) = quadgk(@(s) arrivalDistn.pdf(arrivalParams{:}, s) .* ...
-			                 (serviceDistn.cdf(serviceParams{:}, intBounds(j+1) - s) - ...
-			                  serviceDistn.cdf(serviceParams{:}, intBounds(j) - s)), ...
+		P(i,j) = quadgk(@(s) arrivalDistn.pdf(s) .* ...
+			                 (serviceDistn.cdf(intBounds(j+1) - s) - ...
+			                  serviceDistn.cdf(intBounds(j) - s)), ...
 			            intBounds(i), intBounds(i+1));
 
 		%none of the upper triangular outcomes should actually have probability 0
