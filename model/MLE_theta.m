@@ -1,10 +1,10 @@
-% function [theta, CI] = MLE_theta( y, T, learningmask, mu, sigma, lambda, N, alpha, varargin )
 function [theta_hat, CI] = MLE_theta( y, T, varargin );
 
 %start timing
 tic
 
-DEFAULT_OBJECTIVE     = 'zonn';
+DEFAULT_OBJECTIVE     = 'hmm';
+POSSIBLE_OBJECTIVE    = {'zonneveld', 'hmm', 'GP', 'gaussian'};
 %                              mu         sigma      lambda          N      alpha
 DEFAULT_LEARNINGMASK  = [       1,          1,          1,           1,       0  ];
 DEFAULT_THETA_LB      = [ min(T)-var(T),  1e-6,       1e-6,          1,      1e-6];
@@ -12,7 +12,7 @@ DEFAULT_THETA_UB      = [ max(T)+var(T), var(T),  max(T)-min(T), 100*sum(y),  1 
 DEFAULT_THETA_0       = [    mean(T),    var(T),     var(T),       sum(y),   0.5 ];
 
 DEFAULT_OPTIM_ALG = 'interior-point';
-DEFAULT_DISPLAY   = false;
+DEFAULT_DISPLAY   = true;
 
 parser = inputParser;
 
@@ -37,7 +37,7 @@ objective    = parser.Results.objective;
 optim_alg    = parser.Results.optim_alg;
 display      = parser.Results.display;
 
-options = optimoptions('fmincon', 'Algorithm', optim_alg, 'Display', 'off');
+options = optimoptions('fmincon', 'Algorithm', optim_alg, 'Display', 'iter');
 
 %initialize everything about theta
 %note this is a very flexible parameter spec with very little checking, use carefully
@@ -91,11 +91,13 @@ end
 
 %construct the problem
 problem = struct;
-switch objective
+switch validatestring(objective, POSSIBLE_OBJECTIVE, mfilename, 'objective')
 	case {'GP', 'gaussian'}
-		objectivefun = @gaussian_NLL;
-	case {'zonn', 'zonneveld'}
-		objectivefun = @zonn_NLL;
+		objectivefun = [];
+	case 'zonneveld'
+		objectivefun = @zonn_objective;
+	case 'hmm'
+		objectivefun = @hmm_objective;
 end
 
 problem.objective = @(theta) objective_wrapper(y, T, learningmask, theta, fixed_params, objectivefun);
@@ -123,7 +125,7 @@ if display
 			msg = [msg, ', '];
 		end
 	end
-	msg = [msg, ']'];
+	msg = [msg, ']\n'];
 	msg = sprintf('%s finished in %.2fs\n', msg, runtime);
 
 	fprintf(msg);
@@ -131,13 +133,37 @@ end
 
 end
 
-
+%function to parse learned/fixed theta for the actual objective function
 function objective = objective_wrapper(y, T, learningmask, theta, fixed_params, objectivefun)
 
 params(logical(learningmask))   = theta;
 params(logical(1-learningmask)) = fixed_params;
 
 objective = objectivefun(y, T, params(1), params(2), params(3), params(4), params(5));
+
+end
+
+%function to parse theta into distribution objects for the hmm likelihood function
+function objective = hmm_objective(y, T, mu, sigma, lambda, N_hat, alpha)
+
+rateFunc = makedist('Normal', 'mu', mu, 'sigma', sigma);
+rateFunc = @rateFunc.pdf;
+
+serviceDistn = makedist('Exp', 'mu', lambda);
+
+[~,~,loglikelihood] = forward_messages(rateFunc, serviceDistn, T, y, N_hat, alpha);
+objective = -loglikelihood;
+
+end
+
+%function to parse theta into distribution objects for the zonn likelihood function
+function objective = zonn_objective(y, T, mu, sigma, lambda, N_hat, alpha)
+
+arrivalDistn = makedist('Normal', 'mu', mu, 'sigma', sigma);
+
+serviceDistn = makedist('Exp', 'mu', lambda);
+
+objective = -zonn_LL(y, arrivalDistn, serviceDistn, N_hat, alpha, T);
 
 end
 
