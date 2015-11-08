@@ -4,7 +4,7 @@ function [theta_hat, CI] = MLE_theta( y, T, varargin );
 tic
 
 DEFAULT_OBJECTIVE     = 'hmm';
-POSSIBLE_OBJECTIVE    = {'zonneveld', 'hmm', 'GP', 'gaussian'};
+POSSIBLE_OBJECTIVE    = {'zonneveld', 'hmm', 'GP', 'gaussian', 'mp-gf', 'gf'};
 %                              mu         sigma      lambda          N      alpha
 DEFAULT_LEARNINGMASK  = [       1,          1,          1,           1,       0  ];
 DEFAULT_THETA_LB      = [ min(T)-var(T),  1e-6,       1e-6,          1,      1e-6];
@@ -98,6 +98,8 @@ switch validatestring(objective, POSSIBLE_OBJECTIVE, mfilename, 'objective')
 		objectivefun = @zonn_objective;
 	case 'hmm'
 		objectivefun = @hmm_objective;
+	case {'mpgf','gf'}
+		objectivefun = @mp_gf_objective;
 end
 
 problem.objective = @(theta) objective_wrapper(y, T, learningmask, theta, fixed_params, objectivefun);
@@ -164,6 +166,23 @@ arrivalDistn = makedist('Normal', 'mu', mu, 'sigma', sigma);
 serviceDistn = makedist('Exp', 'mu', lambda);
 
 objective = -zonn_LL(y, arrivalDistn, serviceDistn, N_hat, alpha, T);
+
+end
+
+%function to parse theta for the mp-gf likelihood
+function objective = mp_gf_objective(y, T, mu, sigma, lambda, N_hat, alpha)
+
+rateFunc = makedist('Normal', 'mu', mu, 'sigma', sigma);
+rateFunc = @rateFunc.pdf;
+
+serviceDistn = makedist('Exp', 'mu', lambda);
+
+gamma = immigration_rate(rateFunc, serviceDistn, T, N_hat);
+delta = survival_prob(serviceDistn, T);
+
+likelihood = gf_forward(y, gamma, alpha, delta);
+
+objective = -log(likelihood);
 
 end
 

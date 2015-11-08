@@ -18,7 +18,7 @@ POSSIBLE_DISTN = {'poisson', 'binomial'};
 parser = inputParser;
 addRequired(parser, 'alpha', @(x) isnumeric(x) && (0 <= x <= 1));
 addRequired(parser, 'n',     @(x) isnumeric(x));
-addOptional(parser, 'distn', @isstr);
+addOptional(parser, 'distn', DEFAULT_DISTN, @isstr);
 
 %check inputs
 parser.parse(alpha, n, varargin{:});

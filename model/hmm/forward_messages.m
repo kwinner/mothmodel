@@ -49,6 +49,11 @@ psi(:,1) = P_y(:,1) .* P_0';
 z(1)     = log(sum(psi(:,1)));
 psi(:,1) = exp(-z(1)) .* psi(:,1);
 
+ll = eval_gf(exp(z(1)) .* psi(:,1)', (0:.2:1));
+figure
+plot(ll);
+
+
 %compute the rest of the messages
 for k = 2:K
 	%compute the transition matrix
@@ -60,6 +65,11 @@ for k = 2:K
 	%normalize the message
 	z(k)     = log(sum(psi(:,k)));
 	psi(:,k) = exp(-z(k)) .* psi(:,k);
+
+	ll = eval_gf(exp(z(k)) .* psi(:,k)', (0:.2:1));
+	figure
+	plot(ll);
+	
 end
 
 %if z isn't used in the output, de-normalize the output messages

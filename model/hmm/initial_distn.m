@@ -1,6 +1,6 @@
 function P_0 = initial_distn( rateFunc, serviceDistn, t_0, N_hat, varargin )
 % INITIAL_DISTN := compute the initial distribution of abundance at t_0
-% P_0 = initial_distn( arrivalDistn, serviceDistn, t_0, N_hat, varargin )
+% P_0 = initial_distn( rateFunc, serviceDistn, t_0, N_hat, varargin )
 %
 % INPUTS
 % required:
