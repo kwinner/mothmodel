@@ -44,7 +44,7 @@ binCounts = cellfun(@numel, membership);
 %optionally, report which bin each individual fell into
 if nargout > 1
 	ind_x = arrayfun(@(x) find(x >= xLB & x < xUB), X);
-	ind_y = arrayfun(@(y) find(y >= yLB & y < yUB, Y);
+	ind_y = arrayfun(@(y) find(y >= yLB & y < yUB), Y);
 end
 
 end

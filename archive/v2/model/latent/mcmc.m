@@ -29,6 +29,7 @@ success_history = true(nIterations,1);
 attempts_history = zeros(nIterations,1);
 
 for iteration = 2:nIterations
+	disp(iteration)
 	%do one sample
 	starttime = tic;
 	[Q_history{iteration}, success_history(iteration), attempts_history(iteration)] = gibbsSample(y, Q_history{iteration - 1}, P, N, alpha, T, moves, useARS);
@@ -52,6 +53,7 @@ attempts = 1;
 n = abundance(Q);
 
 %select a move (uniformly at random)
+
 move = struct;
 move.type = moves{randi(numel(moves))};
 
@@ -175,7 +177,7 @@ else
 	LL = normalizeLikelihood(LL);
 
 	%LL should now be a probability vector, or stability failed somewhere...
-	if any(LL < 0) || all(LL == 0)
+	if any(LL < 0) || all(LL == 0) || any(isnan(LL))
 		success = false;
 		Q_prime = Q;
 		attempts = attempts + 1;

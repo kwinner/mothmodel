@@ -28,7 +28,8 @@ for k = 1:length(gamma)
 
 	%last iteration does not have survivors, it just adds immigrants and conditions on observ
 	if k <= length(delta)
-		[a, b, c, d] = survivors(a, b, c, d, delta(k));
+		% [a, b, c, d] = survivors(a, b, c, d, delta(k));
+		[a, b, c, d, f] = survivors2(a, b, c, d, f, delta(k));
 	end
 
 	% ll = arrayfun(@(s) sum(f .* ((c * s + d) .^ (0:length(f)-1))) .* exp(a * s + b), (0:.2:1));
@@ -60,6 +61,30 @@ bPrime = b + a * (1 - delta_k);
 cPrime = c * delta_k;
 dPrime = d + c * (1 - delta_k);
 
+end
+
+function [aPrime, bPrime, cPrime, dPrime, fPrime] = survivors2(a, b, c, d, f, delta_k)
+% SURVIVORS := thin the population by delta_k
+
+aPrime = a * delta_k;
+bPrime = b + a * (1 - delta_k);
+
+cPrime = c * delta_k;
+dPrime = d + c * (1 - delta_k);
+
+fPrime = compose_poly(f, [dPrime cPrime]);
+cPrime = 1;
+dPrime = 0;
+
+end
+
+function h = compose_poly(f, g)
+% tic
+f = poly2sym(fliplr(f));
+g = poly2sym(fliplr(g));
+h = compose(f, g);
+h = fliplr(sym2poly(h));
+% toc
 end
 
 
