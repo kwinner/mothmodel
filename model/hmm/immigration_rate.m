@@ -8,7 +8,7 @@ function gamma = immigration_rate( rateFunc, serviceDistn, T, N_hat )
 %    serviceDistn = a distribution object for the death process (typically exponential)
 %                   serviceDistn should be created with makedist(...)
 %    T            = vector of observation times (reals)
-%    N_hat        = 
+%    N_hat        = superpopulation size
 %
 % OUTPUTS
 %    gamma        = vector of rates of new "successful" immigrants

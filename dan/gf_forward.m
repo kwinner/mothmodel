@@ -59,10 +59,12 @@ end
 % Compute composition of two polynomials by converting them to symbolic
 % functions and then back 
 function h = compose_poly(f, g)
+tic
 f = poly2sym(fliplr(f));
 g = poly2sym(fliplr(g));
 h = compose(f, g);
 h = fliplr(sym2poly(h));
+toc
 end
 
 function [aPrime, bPrime, cPrime, dPrime, fPrime] = survivors(a, b, c, d, f, delta_k)
