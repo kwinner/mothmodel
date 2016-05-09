@@ -1,0 +1,8 @@
+[tversion] MPFR 3.1.4
+[tversion] Compiler: 4.2.1 Compatible Apple LLVM 7.3.0 (clang-703.0.29)
+[tversion] MPIR: header 2.7.2, library 2.7.2
+[tversion] TLS = yes, decimal = no, GMP internals = no
+[tversion] intmax_t = yes, printf = yes
+[tversion] gmp_printf: hhd = yes, lld = yes, jd = yes, td = yes, Ld = yes
+[tversion] MPFR tuning parameters from default
+PASS tversion (exit status: 0)

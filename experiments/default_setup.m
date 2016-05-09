@@ -2,10 +2,10 @@ mu = 8;
 sigma = 4; 
 lambda = 3;
 
-alpha = 0.5;
-N_hat = 80;
+alpha = 0.8;
+N_hat = 10;
 
-T = 1:4:20;
+T = 1:8:20;
 K = numel(T);
 
 arrivalDistn = makedist('Normal', 'mu', mu, 'sigma', sigma); 

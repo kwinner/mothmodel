@@ -17,7 +17,7 @@ K = length(arrivRate);
 syms s ev;
 beta_gf(K)   = symfun((1-s)^-1, s);
 betaDeriv(K) = diff(beta_gf(K), y(K), s);
-gamma_gf(K)  = symfun(1/(gamma(y(K)+1))*(s*detectProb)^(y(K)) * subs(betaDeriv(K), s, s(1-detectProb)), s);
+gamma_gf(K)  = symfun(1/(gamma(y(K)+1))*(s*detectProb)^(y(K)) * subs(betaDeriv(K), s, s*(1-detectProb)), s);
 
 for k = K-1:-1:1
 	arrivRate_k = arrivRate(k);
@@ -26,7 +26,7 @@ for k = K-1:-1:1
 	beta_gf(k) = symfun(1/(deathProb_k * s - s + 1) * subs(psi_gf(k), s, (deathProb_k*s/(deathProb_k*s-s+1))), s);
 
 	betaDeriv(k) = diff(beta_gf(k), y(k), s);
-	gamma_gf(k)  = symfun(1/(gamma(y(k)+1))*(s*detectProb)^(y(k)) * subs(betaDeriv(k), s, s(1-detectProb)), s);
+	gamma_gf(k)  = symfun(1/(gamma(y(k)+1))*(s*detectProb)^(y(k)) * subs(betaDeriv(k), s, s*(1-detectProb)), s);
 end
 
 %evaluate the GF at 1
