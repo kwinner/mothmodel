@@ -56,6 +56,19 @@ bPrime = b - gamma_k;
 
 end
 
+function [ result ] = compose_poly_horner( f, g )
+% COMPOSE_POLY_HORNER Compose two polynomials using Horner's method
+%    
+%   h = compose_poly_horner(f, g)
+%
+n = numel(f);
+result = f(n);
+for i = n-1:-1:1
+    result = conv(result, g);
+    result(1) = result(1) + f(i);
+end
+end
+
 % Compute composition of two polynomials by converting them to symbolic
 % functions and then back 
 function h = compose_poly(f, g)
@@ -74,7 +87,7 @@ bPrime = b + a * (1 - delta_k);
 cPrime = c * delta_k;
 dPrime = d + c * (1 - delta_k);
 
-fPrime = compose_poly(f, [dPrime cPrime]);
+fPrime = compose_poly_horner(f, [dPrime cPrime]);
 cPrime = 1;
 dPrime = 0;
 
