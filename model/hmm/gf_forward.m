@@ -56,11 +56,18 @@ bPrime = b - gamma_k;
 
 end
 
+function [ result ] = compose_poly_horner_special( f, g )
+% COMPOSE_POLY_HORNER_SPECIAL Compose a polynomial f with a linear function
+% g using Horner's method.
+n = numel(f);
+result = f(n);
+for i = n-1:-1:1
+    result = [result*g(1) 0] + [f(i) result*g(2)];
+end
+end
+
 function [ result ] = compose_poly_horner( f, g )
 % COMPOSE_POLY_HORNER Compose two polynomials using Horner's method
-%    
-%   h = compose_poly_horner(f, g)
-%
 n = numel(f);
 result = f(n);
 for i = n-1:-1:1
@@ -87,7 +94,7 @@ bPrime = b + a * (1 - delta_k);
 cPrime = c * delta_k;
 dPrime = d + c * (1 - delta_k);
 
-fPrime = compose_poly_horner(f, [dPrime cPrime]);
+fPrime = compose_poly_horner_special(f, [dPrime cPrime]);
 cPrime = 1;
 dPrime = 0;
 
@@ -113,8 +120,9 @@ for x = 0:min(y_k,length(f)-1)
 	end
 
 	%compute denominator
-	denom = factorial(x) * factorial(y_k-x);
-
+%	denom = factorial(x) * factorial(y_k-x);
+    denom = gamma(x+1)*gamma(y_k-x+1);
+    
 	%move (1-alpha) inside f() to the coefficients
     %numCo = ones(size(xthDerivative));
     %  BUG: this only works if d = 0
