@@ -6,10 +6,10 @@ function [runtimeFA, runtimeGFFA, ll_fa, ll_gffa] = fa_gffa_full_experiment_nmax
 	DEFAULT_SIGMA       = 4;
 	DEFAULT_LAMBDA      = 3;
 	DEFAULT_T           = 1:4:20;
-	DEFAULT_NHAT        = 10;
+	DEFAULT_NHAT        = 100;
 	DEFAULT_GAMMA       = [];
 	DEFAULT_DELTA       = [];
-	DEFAULT_ALPHA       = 1;
+	DEFAULT_ALPHA       = .2;
 	DEFAULT_SILENT      = false;
 
 	parser = inputParser;
@@ -98,9 +98,9 @@ function [runtimeFA, runtimeGFFA, ll_fa, ll_gffa] = fa_gffa_full_experiment_nmax
 	ll_gffa     = ll_gffa     /  nIter;
 
 	if ~silent
-		fprintf('nMax\tFA run\tGFFA run\tFA ll\tGFFA ll\n')
+		fprintf('nMax\tFA run\tPGFFA run\tFA ll\tGFFA ll\n')
 		for iExperiment = 1:nExperiments
-			fprintf('%d\t%.2fs\t%.2fs\t%.2f\t%.2f\n', n_max(iExperiment), runtimeFA(iExperiment), runtimeGFFA, ll_fa(iExperiment), ll_gffa)
+			fprintf('%d\t%.2fs\t%.2fs\t\t%.2f\t%.2f\n', n_max(iExperiment), runtimeFA(iExperiment), runtimeGFFA, ll_fa(iExperiment), ll_gffa)
 		end
 	end
 
