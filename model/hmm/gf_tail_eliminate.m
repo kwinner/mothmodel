@@ -53,7 +53,9 @@ K = length(lambda);
 
 if i == K 
    % In this case, there are no additional variables to eliminate. 
-   % The unnormalized marginal is equal to the forward message.   
+   % The unnormalized marginal is equal to the forward message.
+
+   f = f(:); % always return a column vector, to be consistent with other return cases
    loglikelihood = log(sum(f)) + a + b;
    return; 
 end
