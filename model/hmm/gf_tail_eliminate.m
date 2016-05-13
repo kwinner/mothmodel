@@ -88,7 +88,10 @@ b = c + d;     % terms without s
 
 f = sum(f,2);  % t = 1 --> sum over rows of f  
 
-% Likelihood: evaluate at s=1
+% normalize
+[b, f] = normalize(b, f);
+
+% log-likelihood: evaluate log(f(s) exp(a*s + b) ) at s=1
 loglikelihood = log(sum(f)) + a + b;
 
 end
