@@ -1,4 +1,5 @@
-function [a,b,f] = gf_tail_eliminate( y, lambda, rho, delta, i, a, b, f)
+
+function [loglikelihood, a,b,f] = gf_tail_eliminate( y, lambda, rho, delta, i, a, b, f)
 % GF_TAIL_ELIMINATE := eliminate variables i+1 through K and return the
 %                      unnormalized marginal over variable i, given an
 %                      initial factor over variable i (the alpha messages)
@@ -17,13 +18,15 @@ function [a,b,f] = gf_tail_eliminate( y, lambda, rho, delta, i, a, b, f)
 %              degree polynomial f
 %
 % OUTPUTS
-%    a, b, f = parameters of generating function for the beta message
-%              coming into node i, which has the form f(s) exp(as + b)
-%              where f(s) is a bounded degree polynomial
+%    likelihood = the likelihood, computed as the normalization constant of
+%                 the unnormalized marginal of n_i
 %
-%    a       = scalar
-%    b       = scalar
-%    f       = vector of polynomial coefficients, smallest first
+%    a, b, f    = parameters of generating function for the unnormalized
+%                 marginal of, which has the form f(s) exp(as + b)
+%
+%       - a, b are scalars
+%       - f is a vector of coefficients, smallest degree first
+
 
 % MESSAGES AND REPRESENTATION
 %
@@ -31,43 +34,40 @@ function [a,b,f] = gf_tail_eliminate( y, lambda, rho, delta, i, a, b, f)
 %
 %  gamma(n_i, n_j) := alpha(n_i) * p(n_j, y_{i+1:j} | n_i) --> F_{ij}(s,t)
 %
-% Then note that we can recover the beta messages from the gamma messages
-% as follows:
+% Then note that we can recover the unnormalized marginal over n_i as:
 %
-%   beta_i(n_i) := Pr(y_{i+1:K} | n_i)
-%                = \sum_{n_j} gamma(n_i, n_i) / alpha(n_i)
+%   p(n_i) = alpha(n_i) * p(y_{i+1:K} | n_i)
+%          = \sum_{n_j} gamma(n_i, n_j) 
 %
-% Generating functions are then defined as
+% The joint PGF G_{ij}(s,t) for the gamma messages is defined as:
 %
-%  F_{ij}(s,t) := \sum_{n_i, n_j}  zeta(n_i, n_j) s^{n_i} t^{n_j}
 %  G_{ij}(s,t) := \sum_{n_i, n_j} gamma(n_i, n_j) s^{n_i} t^{n_j}
 %
-% Both F and G have the following form, which we update iteratively:
+% It has the form
 %
-%  f(s,t) exp(ast + bs + ct + d)
+%  G_{ij}(s,t) = f(s,t) exp(ast + bs + ct + d)
 %
-% where f is a bounded-degree polynomial in s and t jointly.
-
-% Intialize
-%   PGF for p(n_i):        A(s) = f(s) exp(s - 1)
-%   Write this as   G_{ii}(s,t) = exp(s - 1)
-%
-%   PGF for zeta(n_i, n_{i+1):
-%
-%      F_{i,i+1}(s,t) = exp(s*(delta(i) t + 1 - delta(i)) - 1 )
-%                     = exp(delta(i)*s*t + (1-delta(i))*s - 1)
-
-
-a = delta(i);
-b = 1 - delta(i);
-c = 0;
-d = -1;
-f =  1;  % matrix representation of the coefficients of f(s,t)
-% f is "little endian"
-%   f(i,j) = coefficient of s^{i-1} t^{j-1}
+% where f is a bounded-degree polynomial in s and t.
 
 K = length(lambda);
 
+if i == K 
+   % In this case, there are no additional variables to eliminate. 
+   % The unnormalized marginal is equal to the forward message.   
+   loglikelihood = log(sum(f)) + a + b;
+   return; 
+end
+
+if i < 1 || i > K
+    error('Requested index is out of bounds');
+end
+
+% Intialize joint PGF over n_i and survivors to next time step 
+% from the input PGF over n_i
+%
+[a, b, c, d, f] = init_survivors(a, b, f, delta(i));
+
+% Now iterate
 for k = i+1:K
     [c, d]     = immigrants(c, d, lambda(k));
     [a, c, f]  = observed(y(k), a, c, f, rho);
@@ -80,13 +80,57 @@ for k = i+1:K
     end
 end
 
-% Final elimination: set t = 1 and return function f(s) exp(as + b)
+% Finally: set t = 1 and return function f(s) exp(as + b)
 a = a + b;     % terms with s
 b = c + d;     % terms without s
 
-f = sum(f,2);  % t = 1 --> sum over columns of f  
+f = sum(f,2);  % t = 1 --> sum over rows of f  
+
+% Likelihood: evaluate at s=1
+loglikelihood = log(sum(f)) + a + b;
 
 end
+
+
+function [aPrime, bPrime, cPrime, dPrime, fPrime] = init_survivors(a, b, f, delta)
+% INIT: starting with initial univariate PGF for alpha message, 
+%       produce initial joint PGF using binomial thinning w/ prob. delta 
+%
+% Input: parameters of initial PGF A(s) = f(s) exp(as + b)
+% 
+% Output: parameters f, a, b, c, d of joint PGF 
+%
+%       G(s,t) := A( s * (delta * t + 1 - delta) )
+%      
+%               = f(s, t) * exp(a*s*t + b*s + c*t + d)  <-- representation
+%
+
+aPrime = a *   delta;
+bPrime = a * (1 - delta);
+cPrime = 0;
+dPrime = b;
+
+% Compute polynomial coefficients
+%
+%    f(s,t) = f(s * (delta * t + 1 - delta)
+%
+%           = sum_i f(i) s^i (delta * t + 1 - delta)^i
+%
+%  The ith term in the sum above is a polynomial in t times a fixed power
+%  s^i --> this means that the ith row of f(s,t) is equal to f(i) times the
+%  coefficients of (delta * t + 1 - delta)^i
+
+degree = length(f) - 1;
+fPrime = zeros(degree+1, degree+1);
+tPolyBase = [1-delta, delta]; % polynomial (delta*t + 1-delta)
+tPoly     = 1;                % ith power of (delta * t + 1 - delta)
+for i=1:degree+1
+    row = f(i) * tPoly;
+    fPrime(i,1:length(row)) = row;
+    tPoly = conv(tPoly, tPolyBase);
+end
+end
+
 
 function [dPrime, fPrime] = normalize(d, f)
 

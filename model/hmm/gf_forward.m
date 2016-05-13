@@ -1,4 +1,4 @@
-function [likelihood,a,b,f,messages] = gf_forward( y, gamma, alpha, delta )
+function [loglikelihood,a,b,f,messages] = gf_forward( y, gamma, alpha, delta )
 % GF_FORWARD := forward algorithm for counts implemented with generating functions
 % likelihood = gf_forward( y, gamma, alpha, delta )
 %
@@ -40,8 +40,8 @@ for k = 1:K
 	end
 end
 
-%evaluate the GF at 1
-likelihood = sum(f) * exp(a + b);
+% Evaluate the GF at 1
+loglikelihood = log(sum(f)) + a + b;
 
 end
 
