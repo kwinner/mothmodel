@@ -1,8 +1,9 @@
 %written 5/10/16
 function [runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality, runtimeFAatTwiceNHat] = fa_pgffa_runtime_vs_N(varargin)
-	DEFAULT_NITER		= 5;
-	% DEFAULT_N_HAT       = [10:10:100, 125:25:500, 1000];
-	DEFAULT_N_HAT       = 10:10:100;
+	DEFAULT_NITER		= 25;
+	DEFAULT_N_HAT       = [10:10:100, 125:25:500];
+	% DEFAULT_N_HAT = [125:25:500];
+	% DEFAULT_N_HAT       = 10:10:100;
 	DEFAULT_N_LIMIT     = max(DEFAULT_N_HAT*1.5);
 
 	%actually, n_max can't really be set this way, but maybe a parameter controlling step size?
@@ -100,7 +101,7 @@ function [runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality, runtimeFA
 			y 	   = binornd(n_true, observAlpha(1));
 
 			n_max_of_max_observ = ceil(1/observAlpha(1) * max(y));
-			n_max_of_2N         = N_hat(iN) * 1.5;
+			n_max_of_2N         = ceil(N_hat(iN) * 1.5);
 
 			%test pgffa
 			tStart = tic;
