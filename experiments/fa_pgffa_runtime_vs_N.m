@@ -116,7 +116,7 @@ function [runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality, runtimeFA
 			while(n_max <= n_max_lim)
 				tStartPGFFA = tic;
 				[~,~,ll_fa_temp] = forward_messages(y, intervalGamma, intervalDelta, observAlpha, n_max);
-                ll_fa_temp = exp(ll_fa_temp);
+                % ll_fa_temp = exp(ll_fa_temp);
 				runtimeFAiter = toc(tStartPGFFA);
 				if n_max == n_max_of_max_observ
 					runtimeFAatMaxYByAlpha(iN) = runtimeFAatMaxYByAlpha(iN) + runtimeFAiter;

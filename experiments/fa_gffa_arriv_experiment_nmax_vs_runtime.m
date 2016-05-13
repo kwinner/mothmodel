@@ -44,7 +44,7 @@ function runtime = fa_gffa_arriv_experiment_nmax_vs_runtime(varargin)
 		for iExperiment = 1:nExperiments
 			tStart = tic;
 			[~,~,ll_fa] = forward_messages(y, intervalGamma, intervalDelta, observAlpha, n_max(iExperiment));
-			ll_fa = exp(ll_fa);
+			% ll_fa = exp(ll_fa);
 			runtimeFA(iExperiment) = runtimeFA(iExperiment) + toc(tStart);
 
 		end

@@ -106,7 +106,7 @@ function [runtimeFA, runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality
 			for iThresh = 1:nThresh
 				tStartPGFFA = tic;
 				[~,~,ll_fa_temp] = forward_messages(y, intervalGamma, intervalDelta, observAlpha(iAlpha, :), n_max(iThresh));
-                ll_fa_temp = exp(ll_fa_temp);
+                % ll_fa_temp = exp(ll_fa_temp);
 				llFA(iAlpha, iThresh)      = llFA(iAlpha, iThresh) + ll_fa_temp;
 				runtimeFAiter = toc(tStartPGFFA);
 				runtimeFA(iAlpha, iThresh) = runtimeFA(iAlpha, iThresh) + runtimeFAiter;

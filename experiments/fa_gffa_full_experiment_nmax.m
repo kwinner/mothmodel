@@ -83,7 +83,7 @@ function [runtimeFA, runtimeGFFA, ll_fa, ll_gffa] = fa_gffa_full_experiment_nmax
 		for iExperiment = 1:nExperiments
 			tStart = tic;
 			[~,~,ll_temp] = forward_messages(y, intervalGamma, intervalDelta, observAlpha, n_max(iExperiment));
-			ll_temp = exp(ll_temp);
+			% ll_temp = exp(ll_temp);
 			ll_fa(iExperiment) = ll_fa(iExperiment) + ll_temp;
 			runtimeFA(iExperiment) = runtimeFA(iExperiment) + toc(tStart);
 
@@ -115,7 +115,7 @@ function [runtimeFA, runtimeGFFA, ll_fa, ll_gffa] = fa_gffa_full_experiment_nmax
 		figure
 		hold on
 		plot(n_max, ll_fa, 'o-', n_max, ll_gffa .* ones(nExperiments, 1), '-')
-		title('n_{max} vs likelihood, full test')
+		title('n_{max} vs loglikelihood, full test')
 		xlabel('n_{max}')
 		ylabel('mean LL')
 	end

@@ -42,7 +42,7 @@ function ll = fa_gffa_arriv_experiment_nmax_vs_likelihood(varargin)
 
 		%fa likelihood
 		[~,~,ll] = forward_messages(y, intervalGamma, intervalDelta, observAlpha, n_max_experiment);
-		ll_fa(iExperiment) = exp(ll);
+		ll_fa(iExperiment) = ll;
 	end
 
 	if ~silent
@@ -56,9 +56,9 @@ function ll = fa_gffa_arriv_experiment_nmax_vs_likelihood(varargin)
 		figure
 		hold on
 		plot(n_max, ll_tr .* ones(nExperiments, 1), '-', n_max, ll_fa, '-', n_max, ll_gffa .* ones(nExperiments, 1), '-')
-		title('n_{max} vs likelihood, arrival test')
+		title('n_{max} vs loglikelihood, arrival test')
 		xlabel('n_{max}')
-		ylabel('likelihood')
+		ylabel('loglikelihood')
 	end
 
 	ll = [ll_tr .* ones(nExperiments, 1), ll_fa, ll_gffa .* ones(nExperiments, 1)];

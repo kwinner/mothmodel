@@ -50,7 +50,8 @@ function ll = fa_gffa_observ_experiment_nmax_vs_likelihood(varargin)
 
 		%fa likelihood
 		[~,~,ll] = forward_messages(y, intervalGamma, intervalDelta, observAlpha, n_max_experiment);
-		ll_fa(iExperiment) = exp(ll);
+		% ll_fa(iExperiment) = exp(ll);
+		ll_fa(iExperiment) = ll;
 	end
 
 	if ~silent
