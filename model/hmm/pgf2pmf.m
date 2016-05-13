@@ -68,13 +68,7 @@ while k < K && rem >= epsilon
 	%and indicate the distinction by using square brackets to index in the comments
 	%pmf[k] = a^k * e^b * sum{x=0:k}(g(x)/(k-x)!)
 
-	%compute the vector of (k-x)!
-	%note: there will be some extraneous ones at the end of this, but we will mask these values out later
-	k_minus_x_factorial = factorial(max(k - (0:D), 0));
-
-	%divide g by fact above, then mask out extraneous terms, sum, and store in pmf
-	pmf(k+1) = sum((k >= (0:D)) .* ... %mask
-	               g ./ k_minus_x_factorial);
+	pmf(k+1) = sum(g ./ gamma(k - (0:D) + 1)); %sum(g(x)/(k-x)!)
 
 	%mult by a^k*e^b
 	pmf(k+1) = pmf(k+1) * a^k * exp(b);
