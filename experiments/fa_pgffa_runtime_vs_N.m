@@ -71,9 +71,9 @@ function [runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality, runtimeFA
 		unscaledGamma = immigration_rate(rateFunc, serviceDistn, T, 1);
 		intervalDelta = survival_prob(serviceDistn, T);
 	elseif isempty(unscaledGamma == []) || isempty(intervalDelta == [])
-		error('gamma and delta must both be specified or unspecified.')
+		error('Error: gamma and delta must both be specified or unspecified.')
 	else
-		warning('Note: this experiment takes /unscaled/ gamma, delta parameters. Do not multiply by N_hat')
+		warning('this experiment takes /unscaled/ gamma, delta parameters. Do not multiply by N_hat')
 	end
 
 	nN = numel(N_hat);

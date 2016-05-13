@@ -52,7 +52,7 @@ function [runtimeFA, runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality
 	%fa supports per-sample values for alpha, but we are assuming a constant detection rate
 	%so alpha needs to be expanded
 	if size(observAlpha, 1) == 1 && size(observAlpha, 2) > 1 && silent ~= true
-		warning('Warning: alpha should probably be a column vector. dim 2 is used for per-sample alphas')
+		warning('alpha should probably be a column vector. dim 2 is used for per-sample alphas')
 	end
 	if size(observAlpha, 2) == 1
 		observAlpha = repmat(observAlpha, 1, K);
@@ -67,10 +67,10 @@ function [runtimeFA, runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality
 		intervalGamma = immigration_rate(rateFunc, serviceDistn, T, N_hat);
 		intervalDelta = survival_prob(serviceDistn, T);
 	elseif isempty(intervalGamma == []) || isempty(intervalDelta == [])
-		error('gamma and delta must both be specified or unspecified.')
+		error('Error: gamma and delta must both be specified or unspecified.')
 	end
 	if max(n_max) < 1.5 * N_hat
-		warning('Warning: maximum value of n_hat should be at least twice N_hat, added manually.');
+		warning('maximum value of n_hat should be at least twice N_hat, added manually.');
 		n_max = [n_max, ceil(N_hat * 1.5)];
 	end
 
