@@ -93,7 +93,8 @@ function [runtimeFA, runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality
 			y 	   = binornd(n_true, observAlpha(iAlpha,:));
 
 			maxObserv = max(y);
-			iThreshOfMaxObserv = find(n_max >= ceil(1/observAlpha(iAlpha,1) * maxObserv), 1);
+			% iThreshOfMaxObserv = find(n_max >= ceil(1/observAlpha(iAlpha,1) * maxObserv), 1);
+			iThreshOfMaxObserv = find(n_max >= ceil(nbininv(1-1e-10,max(y),observAlpha)));
 
 			%test pgffa
 			tStart = tic;

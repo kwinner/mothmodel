@@ -19,6 +19,7 @@ function [runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality, runtimeFA
 	DEFAULT_DELTA       = [];
 	DEFAULT_SILENT      = false;
 	DEFAULT_LL_EPSILON  = 0.001;
+	DEFAULT_TAIL_PROB_LIM = 1e-10;
 
 	parser = inputParser;
 	addParamValue(parser, 'nIter',     DEFAULT_NITER)
@@ -35,6 +36,7 @@ function [runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality, runtimeFA
 	addParamValue(parser, 'delta',     DEFAULT_DELTA)
 	addParamValue(parser, 'silent',    DEFAULT_SILENT)
 	addParamValue(parser, 'epsilon',   DEFAULT_LL_EPSILON)
+	addParamValue(parser, 'tail_prob_lim', DEFAULT_TAIL_PROB_LIM);
 
 	parse(parser, varargin{:})
 	nIter         = parser.Results.nIter;
@@ -51,6 +53,7 @@ function [runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality, runtimeFA
 	intervalDelta = parser.Results.delta;
 	silent        = parser.Results.silent;
 	llEpsilon     = parser.Results.epsilon;
+	tailProbLim   = parser.Results.tail_prob_lim;
 
 	%populate per-interval params
 	if K == 0
@@ -100,7 +103,8 @@ function [runtimePGFFA, runtimeFAatMaxYByAlpha, runtimeFAatLLEquality, runtimeFA
 			n_true = poissrnd(intervalGamma);
 			y 	   = binornd(n_true, observAlpha(1));
 
-			n_max_of_max_observ = ceil(1/observAlpha(1) * max(y));
+			% n_max_of_max_observ = ceil(1/observAlpha(1) * max(y));
+			n_max_of_max_observ = ceil(nbininv(1-tailProbLim, max(y), observAlpha));
 			n_max_of_2N         = ceil(N_hat(iN) * 1.5);
 
 			%test pgffa
