@@ -137,7 +137,7 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 				%test pgffa
 				tStart = tic;
 				llPGFFA                        = gf_forward(y, gamma, alpha, delta);
-				runtimePGFFA(iN, iAlpha, iter) = runtimePGFFA(iN, iAlpha, iter) + toc(tStart);
+				runtimePGFFA(iN, iAlpha, iter) = toc(tStart);
 
 				%test fa with each setting of n_max
 				%n_max starts at the minimum possible value, then increments carefully until ll converges,
