@@ -1,12 +1,13 @@
 %written 5/17/16
 function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, CI_widthTrunc, alpha_hatPGFFA, N_hatPGFFA, alpha_hatTrunc, N_hatTrunc] = nips_parameter_est_pgffa_error(varargin)
-	NalphaProduct = 30;
-	n_max         = 200;
-	K             = 10;
+	NalphaProduct = 10;
+	n_max         = 100;
+	K             = 5;
+    R             = 10;
 
 	nIter         = 1;
 % 	alphaVec      = 0.1:0.2:1.00;
-    alphaVec = 0.1;
+    alphaVec      = 0.5;
 	nAlpha        = numel(alphaVec);
 
 	optimAlg      = 'interior-point';
@@ -33,9 +34,8 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
 		%repeat nIter times
 		for iter = 1:nIter
 			%sample K observations
-			y = binornd(N, alpha, K, 1);
-            
-            y = [24; 27; 34; 27; 29; 32; 28; 23; 32; 34];
+            n = poissrnd(N, R, 1);
+			y = binornd(repmat(n, 1, K), alpha);
 
 			if any(isnan(y))
 				keyboard
@@ -45,7 +45,7 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
 
 			%learn parameter estimates w/ pgffa
 			pgffa.objective = @(theta) pgffa_objective(theta, y);
-			pgffa.x0        = [0.5, max(y)*2];
+			pgffa.x0        = [0.5, max(y(:))*2];
 			pgffa.lb        = [0, 1];
 			pgffa.ub        = [1, inf];
 			pgffa.solver    = 'fmincon';
@@ -64,7 +64,7 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
 
 			%learn parameter estimates w/ the truncated n mixture model
 			trunc.objective = @(theta) trunc_objective(theta, y, n_max);
-			trunc.x0        = [0.5, max(y)*2];
+			trunc.x0        = [0.5, max(y(:))*2];
 			trunc.lb        = [0, 1];
 			trunc.ub        = [1, inf];
 			trunc.solver    = 'fmincon';
@@ -85,7 +85,8 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
 end
 
 function nll = pgffa_objective(theta, y)
-	K = numel(y);
+    R = size(y, 1);
+	K = size(y, 2);
 
 	alpha = theta(1);
 	N     = theta(2);
@@ -93,15 +94,22 @@ function nll = pgffa_objective(theta, y)
 	gamma = [N, zeros(1, K-1)];
 	delta = ones(K-1, 1);
 
-	[nll, ~, ~, ~, ~] = gf_forward(y, gamma, alpha, delta);
-    nll = -nll;
+    nll = zeros(1,R);
+    for r = 1:R
+        [nll(r), ~, ~, ~, ~] = gf_forward(y(r,:), gamma, alpha, delta);
+    end
+    nll = -sum(nll);
 end
 
 function nll = trunc_objective(theta, y, n_max)
-	nll = 0;
-	for n = 0:n_max
-		nll = nll + poisspdf(n, theta(2)) * prod(binopdf(y, n, theta(1)));
+    R = size(y, 1);
+
+	nll = zeros(1,R);
+    for r = 1:R
+        for n = 0:n_max
+            nll(r) = nll(r) + poisspdf(n, theta(2)) * prod(binopdf(y(r,:), n, theta(1)));
+        end
     end
-    nll = -log(nll);
+    nll = -sum(log(nll));
 end
 
