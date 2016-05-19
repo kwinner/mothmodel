@@ -237,9 +237,10 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 	for iN = 1:nN
 		N_hat = N_hatVec(iN);
 
-		hFig = figure('Visible', 'off');
-		hFig.PaperUnits = 'inches';
-		hFig.PaperPosition = FIGSIZE;
+		% hFig = figure('Visible', 'off');
+		% hFig.PaperUnits = 'inches';
+		% hFig.PaperPosition = FIGSIZE;
+		hFig = figure('Visible', 'off', 'Units', 'inches', 'Position', FIGSIZE);
 
 		hold on
 		colOrd = get(gca, 'ColorOrder');
@@ -249,9 +250,13 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 		plot(alphaVec, meanRuntimeFAatOracle(iN, :), 'LineWidth', LINEWIDTH, 'Color', colOrd(2,:))
 		plot(alphaVec, meanRuntimePGFFA(iN, :),      'LineWidth', LINEWIDTH, 'Color', colOrd(1,:))
 
-		title(sprintf('$$\\alpha$$ vs runtime of FA and PGFFA, $$\\hat{N} = %d$$', N_hat), ...
-		      'FontSize', TITLEFONT, 'Interpreter', 'Latex')
-		xlabel('$$\alpha$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% title(sprintf('$$\\alpha$$ vs runtime of FA and PGFFA, $$\\hat{N} = %d$$', N_hat), ...
+		%       'FontSize', TITLEFONT, 'Interpreter', 'Latex')
+		% xlabel('$$\alpha$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% ylabel('mean runtime (s)', 'FontSize', LABELFONT)
+		title(sprintf('alpha vs runtime of FA and PGFFA, N = %d', N_hat), ...
+		      'FontSize', TITLEFONT)
+		xlabel('alpha',       'FontSize', LABELFONT)
 		ylabel('mean runtime (s)', 'FontSize', LABELFONT)
 
 		legend({'FA - Poiss'; ...
@@ -268,9 +273,10 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 		close(hFig)
 
 		%repeat for oracle vs PGFFA only
-		hFig = figure('Visible', 'off');
-		hFig.PaperUnits = 'inches';
-		hFig.PaperPosition = FIGSIZE;
+		% hFig = figure('Visible', 'off');
+		% hFig.PaperUnits = 'inches';
+		% hFig.PaperPosition = FIGSIZE;
+		hFig = figure('Visible', 'off', 'Units', 'inches', 'Position', FIGSIZE);
 
 		hold on
 		colOrd = get(gca, 'ColorOrder');
@@ -278,9 +284,13 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 		plot(alphaVec, meanRuntimeFAatOracle(iN, :), 'LineWidth', LINEWIDTH, 'Color', colOrd(2,:))
 		plot(alphaVec, meanRuntimePGFFA(iN, :),      'LineWidth', LINEWIDTH, 'Color', colOrd(1,:))
 
-		title(sprintf('$$\\alpha$$ vs runtime of FA and PGFFA, $$\\hat{N} = %d$$', N_hat), ...
-		      'FontSize', TITLEFONT, 'Interpreter', 'Latex')
-		xlabel('$$\alpha$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% title(sprintf('$$\\alpha$$ vs runtime of FA and PGFFA, $$\\hat{N} = %d$$', N_hat), ...
+		%       'FontSize', TITLEFONT, 'Interpreter', 'Latex')
+		% xlabel('$$\alpha$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% ylabel('mean runtime (s)', 'FontSize', LABELFONT)
+		title(sprintf('alpha vs runtime of FA and PGFFA, N = %d', N_hat), ...
+		      'FontSize', TITLEFONT)
+		xlabel('alpha',       'FontSize', LABELFONT)
 		ylabel('mean runtime (s)', 'FontSize', LABELFONT)
 
 		legend({'FA - Oracle'; ...
@@ -295,18 +305,23 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 		close(hFig)
 
 		%repeat for PGFFA only
-		hFig = figure('Visible', 'off');
-		hFig.PaperUnits = 'inches';
-		hFig.PaperPosition = FIGSIZE;
+		% hFig = figure('Visible', 'off');
+		% hFig.PaperUnits = 'inches';
+		% hFig.PaperPosition = FIGSIZE;
+		hFig = figure('Visible', 'off', 'Units', 'inches', 'Position', FIGSIZE);
 
 		hold on
 		colOrd = get(gca, 'ColorOrder');
 
 		plot(alphaVec, meanRuntimePGFFA(iN, :),      'LineWidth', LINEWIDTH, 'Color', colOrd(1,:))
 
-		title(sprintf('$$\\alpha$$ vs runtime of PGFFA, $$\\hat{N} = %d$$', N_hat), ...
-		      'FontSize', TITLEFONT, 'Interpreter', 'Latex')
-		xlabel('$$\alpha$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% title(sprintf('$$\\alpha$$ vs runtime of PGFFA, $$\\hat{N} = %d$$', N_hat), ...
+		%       'FontSize', TITLEFONT, 'Interpreter', 'Latex')
+		% xlabel('$$\alpha$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% ylabel('mean runtime (s)', 'FontSize', LABELFONT)
+		title(sprintf('alpha vs runtime of PGFFA, N = %d', N_hat), ...
+		      'FontSize', TITLEFONT)
+		xlabel('alpha',       'FontSize', LABELFONT)
 		ylabel('mean runtime (s)', 'FontSize', LABELFONT)
 
 		legend({'PGFFA'}, ...
@@ -324,9 +339,10 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 	for iAlpha = 1:nAlpha
 		alpha = alphaVec(iAlpha);
 
-		hFig = figure('Visible', 'off');
-		hFig.PaperUnits = 'inches';
-		hFig.PaperPosition = FIGSIZE;
+		% hFig = figure('Visible', 'off');
+		% hFig.PaperUnits = 'inches';
+		% hFig.PaperPosition = FIGSIZE;
+		hFig = figure('Visible', 'off', 'Units', 'inches', 'Position', FIGSIZE);
 
 		hold on
 		colOrd = get(gca, 'ColorOrder');
@@ -336,9 +352,13 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 		plot(N_hatVec, meanRuntimeFAatOracle(:, iAlpha), 'LineWidth', LINEWIDTH, 'Color', colOrd(2,:))
 		plot(N_hatVec, meanRuntimePGFFA(:, iAlpha),      'LineWidth', LINEWIDTH, 'Color', colOrd(1,:))
 
-		title(sprintf('$$\\hat{N}$$ vs runtime of FA and PGFFA, $$\\alpha = %0.2f$$', alpha), ...
-		      'FontSize', TITLEFONT, 'Interpreter', 'Latex')
-		xlabel('$$\hat{N}$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% title(sprintf('$$\\hat{N}$$ vs runtime of FA and PGFFA, $$\\alpha = %0.2f$$', alpha), ...
+		%       'FontSize', TITLEFONT, 'Interpreter', 'Latex')
+		% xlabel('$$\hat{N}$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% ylabel('mean runtime (s)', 'FontSize', LABELFONT)
+		title(sprintf('N vs runtime of FA and PGFFA, alpha = %d', alpha), ...
+		      'FontSize', TITLEFONT)
+		xlabel('N',       'FontSize', LABELFONT)
 		ylabel('mean runtime (s)', 'FontSize', LABELFONT)
 
 		legend({'FA - Poiss'; ...
@@ -355,9 +375,10 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 		close(hFig)
 
 		%repeat for oracle vs pgffa
-		hFig = figure('Visible', 'off');
-		hFig.PaperUnits = 'inches';
-		hFig.PaperPosition = FIGSIZE;
+		% hFig = figure('Visible', 'off');
+		% hFig.PaperUnits = 'inches';
+		% hFig.PaperPosition = FIGSIZE;
+		hFig = figure('Visible', 'off', 'Units', 'inches', 'Position', FIGSIZE);
 
 		hold on
 		colOrd = get(gca, 'ColorOrder');
@@ -365,9 +386,13 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 		plot(N_hatVec, meanRuntimeFAatOracle(:, iAlpha), 'LineWidth', LINEWIDTH, 'Color', colOrd(2,:))
 		plot(N_hatVec, meanRuntimePGFFA(:, iAlpha),      'LineWidth', LINEWIDTH, 'Color', colOrd(1,:))
 
-		title(sprintf('$$\\hat{N}$$ vs runtime of FA and PGFFA, $$\\alpha = %0.2f$$', alpha), ...
-		      'FontSize', TITLEFONT, 'Interpreter', 'Latex')
-		xlabel('$$\hat{N}$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% title(sprintf('$$\\hat{N}$$ vs runtime of FA and PGFFA, $$\\alpha = %0.2f$$', alpha), ...
+		%       'FontSize', TITLEFONT, 'Interpreter', 'Latex')
+		% xlabel('$$\hat{N}$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% ylabel('mean runtime (s)', 'FontSize', LABELFONT)
+		title(sprintf('N vs runtime of FA and PGFFA, alpha = %d', alpha), ...
+		      'FontSize', TITLEFONT)
+		xlabel('N',       'FontSize', LABELFONT)
 		ylabel('mean runtime (s)', 'FontSize', LABELFONT)
 
 		legend({'FA - Oracle'; ...
@@ -382,18 +407,24 @@ function [runtimePGFFA, runtimeFAatOracle, runtimeFAatPoiss, runtimeFAatNegBin, 
 		close(hFig)
 
 		%repeat for pgffa only
-		hFig = figure('Visible', 'off');
-		hFig.PaperUnits = 'inches';
-		hFig.PaperPosition = FIGSIZE;
+		% hFig = figure('Visible', 'off');
+		% hFig.PaperUnits = 'inches';
+		% hFig.PaperPosition = FIGSIZE;
+		hFig = figure('Visible', 'off', 'Units', 'inches', 'Position', FIGSIZE);
 
 		hold on
 		colOrd = get(gca, 'ColorOrder');
 
 		plot(N_hatVec, meanRuntimePGFFA(:, iAlpha),      'LineWidth', LINEWIDTH, 'Color', colOrd(1,:))
 
-		title(sprintf('$$\\hat{N}$$ vs runtime of PGFFA, $$\\alpha = %0.2f$$', alpha), ...
-		      'FontSize', TITLEFONT, 'Interpreter', 'Latex')
-		xlabel('$$\hat{N}$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% title(sprintf('$$\\hat{N}$$ vs runtime of PGFFA, $$\\alpha = %0.2f$$', alpha), ...
+		%       'FontSize', TITLEFONT, 'Interpreter', 'Latex')
+		% xlabel('$$\hat{N}$$',       'FontSize', LABELFONT, 'Interpreter', 'Latex')
+		% ylabel('mean runtime (s)', 'FontSize', LABELFONT)
+
+		title(sprintf('N vs runtime of PGFFA, alpha = %d', alpha), ...
+		      'FontSize', TITLEFONT)
+		xlabel('N',       'FontSize', LABELFONT)
 		ylabel('mean runtime (s)', 'FontSize', LABELFONT)
 
 		legend({'PGFFA'}, ...
