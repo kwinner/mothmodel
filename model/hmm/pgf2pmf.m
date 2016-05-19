@@ -36,7 +36,7 @@ function [pmf, rem] = pgf2pmf(f, a, b, varargin)
 
 DEFAULT_EPSILON    = 0.0001;
 DEFAULT_NORMALIZED = true;
-DEFAULT_STOP_ON_0  = true;
+DEFAULT_STOP_ON_0  = false;
 
 parser = inputParser;
 %note that epsilon and K initially default to 0
@@ -63,7 +63,7 @@ pmf = zeros(1, K);
 g = f ./ (a .^ (0:D));
 
 k = 0;
-while k < K && rem >= epsilon
+while (K == 0 || k < K) && (epsilon == 0 || rem >= epsilon)
 	%throughout the comments, we will treat vectors as 0-indexed, 
 	%and indicate the distinction by using square brackets to index in the comments
 	%pmf[k] = a^k * e^b * sum{x=0:k}(g(x)/(k-x)!)
@@ -73,22 +73,22 @@ while k < K && rem >= epsilon
 	%mult by a^k*e^b
 	pmf(k+1) = pmf(k+1) * a^k * exp(b);
 
-	%increment and recompute rem
+	%increment and recompute rem    
 	rem = rem - pmf(k+1);
 	k = k + 1;
 
 	if stop_on_0 && pmf(k) == 0
 		break
-	end
+    end
 end
 
 if normalized
 	%normalize pmf before function returns
-	if rem <= 1 && rem > 0
-		pmf = pmf ./ rem;
-	else
+% 	if rem < 1 && rem > 0
+% 		pmf = pmf ./ rem;
+% 	else
 		pmf = pmf ./ sum(pmf);
-	end
+% 	end
 end
 
 end
