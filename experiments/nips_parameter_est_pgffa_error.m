@@ -1,12 +1,12 @@
 %written 5/17/16
 function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, CI_widthTrunc, alpha_hatPGFFA, N_hatPGFFA, alpha_hatTrunc, N_hatTrunc] = nips_parameter_est_pgffa_error(varargin)
-	NalphaProduct = 30;
-	n_max         = 200;
+	NalphaProduct = 10;
+	n_max         = 50;
 	K             = 10;
 
-	nIter         = 1;
-% 	alphaVec      = 0.1:0.2:1.00;
-    alphaVec = 0.1;
+	nIter         = 100;
+ 	alphaVec      = 0.1:0.1:1.00;
+%     alphaVec = 0.1;
 	nAlpha        = numel(alphaVec);
 
 	optimAlg      = 'interior-point';
@@ -35,7 +35,7 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
 			%sample K observations
 			y = binornd(N, alpha, K, 1);
             
-            y = [24; 27; 34; 27; 29; 32; 28; 23; 32; 34];
+%             y = [24; 27; 34; 27; 29; 32; 28; 23; 32; 34];
 
 			if any(isnan(y))
 				keyboard

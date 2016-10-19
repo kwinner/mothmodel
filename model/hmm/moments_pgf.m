@@ -26,7 +26,7 @@ if nargout > 1
 	%variance is the second derivative of F(s), evaluated at s = 1
 	%which is given by:
 	%		F''(s) = e^(a+b) * sum[k=0:D]{((a+k)^2-k)f[k]}
-	var = exp(a+b) * sum((((a:D+a).^2-(0:D)) .* f))
+	var = exp(a+b) * sum((((a:D+a).^2-(0:D)) .* f));
 end
 
 end

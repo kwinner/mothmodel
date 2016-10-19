@@ -1,17 +1,17 @@
 %written 5/17/16
-function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, CI_widthTrunc, alpha_hatPGFFA, N_hatPGFFA, alpha_hatTrunc, N_hatTrunc] = nips_parameter_est_pgffa_error(varargin)
+function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, CI_widthTrunc, alpha_hatPGFFA, N_hatPGFFA, alpha_hatTrunc, N_hatTrunc, divergePGFFA, divergeTrunc] = nips_multisite_error(varargin)
 	NalphaProduct = 10;
-	n_max         = 100;
-	K             = 5;
-    R             = 10;
+	n_max         = 50;
+	K             = 10;
+    R             = 20;
 
 	nIter         = 1;
-% 	alphaVec      = 0.1:0.2:1.00;
-    alphaVec      = 0.5;
+	% alphaVec      = 0.1:0.2:1.00;
+    alphaVec      = 0.05:0.05:.25;
 	nAlpha        = numel(alphaVec);
 
 	optimAlg      = 'interior-point';
-	options       = optimoptions('fmincon', 'Algorithm', optimAlg, 'Display', 'off');
+	options       = optimoptions('fmincon', 'Algorithm', optimAlg, 'Display', 'off', 'StepTolerance', 1e-15);
 
 	%prepare output
 	alpha_hatPGFFA = zeros(nAlpha, nIter);
@@ -19,11 +19,13 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
 	errorPGFFA     = zeros(nAlpha, 2, nIter);
 	CI_widthPGFFA  = zeros(nAlpha, 2, nIter);
 	coveragePGFFA  = zeros(nAlpha, 2, nIter);
+	divergePGFFA   = zeros(nAlpha, nIter);
 	alpha_hatTrunc = zeros(nAlpha, nIter);
 	N_hatTrunc     = zeros(nAlpha, nIter);
 	errorTrunc     = zeros(nAlpha, 2, nIter);
 	CI_widthTrunc  = zeros(nAlpha, 2, nIter);
 	coverageTrunc  = zeros(nAlpha, 2, nIter);
+	divergeTrunc   = zeros(nAlpha, nIter);
 
 	%now iterate over values of alpha
 	for iAlpha = 1:nAlpha
@@ -37,8 +39,11 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
             n = poissrnd(N, R, 1);
 			y = binornd(repmat(n, 1, K), alpha);
 
-			if any(isnan(y))
-				keyboard
+			while any(isnan(y(:))) || any(y(:) > n_max)
+				warning('Generated observations which are impossible under n_max.')
+
+            	n = poissrnd(N, R, 1);
+				y = binornd(repmat(n, 1, K), alpha);				
 			end
 
 			fprintf('N = %d, alpha = %0.2f, y = %s\n', N, alpha, mat2str(y));
@@ -51,9 +56,16 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
 			pgffa.solver    = 'fmincon';
 			pgffa.options   = options;
 
-			[theta_hat, ~, ~, ~, ~, ~, theta_hessian] = fmincon(pgffa);
+			[theta_hat, ~, exitflag, ~, ~, ~, theta_hessian] = fmincon(pgffa);
 			alpha_hatPGFFA(iAlpha, iter) = theta_hat(1);
 			N_hatPGFFA(iAlpha, iter)     = theta_hat(2);
+
+			if rcond(theta_hessian) < 1e-15
+				divergePGFFA(iAlpha, iter) = 1;
+				fprintf('PGFFA, exit w/ %d, infinite estimate\n', exitflag);
+			else
+				fprintf('PGFFA, exit w/ %d\n', exitflag);
+			end
 
 			errorPGFFA(iAlpha, :, iter) = (theta_hat - [alpha, N]) .^ 2;
 
@@ -70,9 +82,16 @@ function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, C
 			trunc.solver    = 'fmincon';
 			trunc.options   = options;
 
-			[theta_hat, ~, ~, ~, ~, ~, theta_hessian] = fmincon(trunc);
+			[theta_hat, ~, exitflag, ~, ~, ~, theta_hessian] = fmincon(trunc);
 			alpha_hatTrunc(iAlpha, iter) = theta_hat(1);
 			N_hatTrunc(iAlpha, iter)     = theta_hat(2);
+
+			if rcond(theta_hessian) < 1e-15
+				divergeTrunc(iAlpha, iter) = 1;
+				fprintf('Trunc, exit w/ %d, infinite estimate\n', exitflag);
+			else
+				fprintf('Trunc, exit w/ %d\n', exitflag);
+			end
 
 			errorTrunc(iAlpha, :, iter) = (theta_hat - [alpha, N]) .^ 2;
 
@@ -111,5 +130,9 @@ function nll = trunc_objective(theta, y, n_max)
         end
     end
     nll = -sum(log(nll));
+
+    if isinf(nll) || isnan(nll)
+    	keyboard
+    end
 end
 
