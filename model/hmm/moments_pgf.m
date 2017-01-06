@@ -19,14 +19,18 @@ D = numel(f) - 1;
 
 %mean is just the first derivative of F(s) evaluated at s = 1
 %which is given by:
-%		F'(1) = e^(a+b) * sum[k=0:D]((a+k)f[k])
-mean = exp(a+b) * sum(((a:D+a) .* f));
+%		F'(1) = e^(a+b) * [f'(1) + af(1)]
+f_p = f(2:end) .* (1:D);
+F_p = exp(a+b) * (sum(f_p) + a * sum(f));
+mean = F_p;
 
 if nargout > 1
-	%variance is the second derivative of F(s), evaluated at s = 1
-	%which is given by:
-	%		F''(s) = e^(a+b) * sum[k=0:D]{((a+k)^2-k)f[k]}
-	var = exp(a+b) * sum((((a:D+a).^2-(0:D)) .* f));
+	%variance is given by:
+    %       Var = F''(1) - [F'(1)]^2 + F'(1)
+	%		F''(1) = e^(a+b) * [f''(1) + 2af'(1) + a^2 f(1)]
+    f_pp = f_p(2:end) .* (1:D-1);
+    F_pp = exp(a+b) * (sum(f_pp) + 2 * a * sum(f_p) + (a^2) * sum(f));
+    var  = F_pp - (F_p ^ 2) + F_p;
 end
 
 end
