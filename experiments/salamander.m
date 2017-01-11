@@ -47,7 +47,7 @@ function [tOptim, nIters, tMarg] = salamander()
 	tMarg = zeros(R, K, 3);
 
 	for r = 1:R
-	% for r = 1
+%     for r = 11
 		y = salamanderData(r, :);
 
 		[~, ~, ~, ~, messages] = gf_forward(y, gamma, alpha_hat, delta);
@@ -65,33 +65,48 @@ function [tOptim, nIters, tMarg] = salamander()
 			t = tic;
 			[meanVec(i), varVec(i)] = moments_pgf(f, a, b - lll);
 			tMarg(r,i,3) = toc(t);
-		end
+        end
+        
+        pmf2 = zeros(40, 20);
+        trans = zeros(40, 20);
+        for k = 1:20
+            if mod(k,3) == 0
+                pmf2(:,k) = max(pmf(:)) .* ones(40,1);
+                trans(:,k) = zeros(40,1);
+            else
+                pmf2(:,k) = pmf(:,k - fix(k/3));
+                trans(:,k) = ones(40,1);
+            end
+        end
+        kVec = [1,2,4,5,7,8,10,11,13,14,16,17,19,20];
 
 		% pmf = flipud(pmf);
 
 		h = figure('Visible', 'off', 'Units', 'inches', 'Position', FIGSIZE);
-		% h = figure('Units', 'inches', 'Position', FIGSIZE);
+%         h = figure('Units', 'inches', 'Position', FIGSIZE);
 		hold on
+		set(gca, 'FontSize', TICKLABELFONT)
 		colormap(pink(255));
-		imagesc(pmf);
-		scatter(1:K, salamanderData(r,:)./alpha_hat, 200, 'd', 'filled', 'MarkerFaceColor', [1 1 1], 'MarkerEdgeColor', [0 0 0], 'LineWidth', 2)
-		scatter(1:K, meanVec, 150, '+', 'MarkerFaceColor', [1 1 1], 'MarkerEdgeColor', MEANCOLOR, 'LineWidth', 4)
+		imagesc(pmf2);
+% 		scatter(1:K, salamanderData(r,:)./alpha_hat, 200, 'd', 'filled', 'MarkerFaceColor', [1 1 1], 'MarkerEdgeColor', [0 0 0], 'LineWidth', 2)
+% 		scatter(k, meanVec, 150, '+', 'MarkerFaceColor', [1 1 1], 'MarkerEdgeColor', MEANCOLOR, 'LineWidth', 4)
+        scatter(kVec, meanVec, 150, '+', 'MarkerFaceColor', [1 1 1], 'MarkerEdgeColor', MEANCOLOR, 'LineWidth', 4)
 		% for i  = 1:K
 		% 	plot([0.55+(i-1), 1.45+(i-1)], [meanVec(i), meanVec(i)], 'Color', [1 1 1], 'LineWidth', 5)
 		% end
 		% scatter(1:K, meanVec, 200, 'd', 'filled', 'MarkerFaceColor', [1 1 1], 'MarkerEdgeColor', [0 0 0], 'LineWidth', 2)
 		% [l, icons, plots] = legend({'Observed Counts'}, 'Position', [0.6428    0.7657    0.1988    0.0370], 'FontSize', LEGENDFONT);
-		[l, icons, plots] = legend({'Observed Counts / $$\hat{\rho}$$', 'Mean'}, 'Position', [0.5797    0.8045    0.2649    0.0993], 'FontSize', LEGENDFONT, 'Interpreter', 'Latex');
+% 		[l, icons, plots] = legend({'Observed Counts / $$\hat{\rho}$$', 'Mean'}, 'Position', [0.5797    0.8045    0.2649    0.0993], 'FontSize', LEGENDFONT, 'Interpreter', 'Latex');
+%         [l, icons, plots] = legend({'Posterior mean'}, 'Position', [0.5797    0.8045    0.2649    0.0993], 'FontSize', 26);
 		title(sprintf('Posterior marginals for site #%d', max(find(nonzerosites, r))), 'FontSize', TITLEFONT)
 		xlabel('T', 'FontSize', LABELFONT)
 		set(gca, 'TickDir', 'out')
-		xlim([0.5, K + 0.5]);
+		xlim([0.5, max(kVec) + 0.5]);
 		ylim([0.5, 40.5]);
 		set(gca, 'YDir', 'Normal')
-		set(gca, 'FontSize', TICKLABELFONT)
 		set(gca, 'YTick', 0:5:40)
 		set(gca, 'YTickLabel', 0:5:40)
-		set(gca, 'XTick', 1:K)
+		set(gca, 'XTick', kVec)
 		set(gca, 'XTickLabel', T)
 
 		% keyboard

@@ -2,11 +2,13 @@
 function [errorPGFFA, errorTrunc, coveragePGFFA, coverageTrunc, CI_widthPGFFA, CI_widthTrunc, alpha_hatPGFFA, N_hatPGFFA, alpha_hatTrunc, N_hatTrunc, divergePGFFA, divergeTrunc, yRecord] = nips_multisite_error2(varargin)
 	NalphaProduct = 10;
 	n_max         = 50;
-	K             = 10;
+	K             = 50;
     R             = 20;
 
-	nIter         = 100;
-	lambdaVec     = 10:10:200;
+% 	nIter         = 10;
+    nIter = 1;
+%  	lambdaVec     = 10:10:150;
+lambdaVec = 100;
 	% lambdaVec     = 10:10:50;
 	nLambda       = numel(lambdaVec);
 
